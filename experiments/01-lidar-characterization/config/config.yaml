@@ -1,0 +1,60 @@
+# ============================================================
+# EXP-01 — LiDAR Dataset Characterization
+# Configuration
+# ============================================================
+
+# Dataset configuration
+dataset:
+  name: "KITTI Odometry"
+  source: "Karlsruhe Institute of Technology"
+  url: "https://www.cvlibs.net/datasets/kitti/eval_odometry.php"
+  license: "CC BY-NC-SA 3.0"
+
+  # Path to the Velodyne data directory
+  # This should point to the directory containing .bin files
+  # Example: datasets/kitti/sequences/00/velodyne/
+  # Use relative path from repository root, or set via --data-dir CLI argument
+  data_dir: "datasets/kitti/sequences/00/velodyne"
+
+  # Sequence to analyze (KITTI sequences are numbered 00-21)
+  sequence: "00"
+
+  # Frame range (inclusive). Set to null to process all frames.
+  frame_start: 0
+  frame_end: null        # null = process all available frames
+
+  # Maximum number of frames to process (safety limit for large sequences)
+  # Set to null to process all frames in range
+  max_frames: 200
+
+# Sensor specifications (from KITTI documentation)
+# These are REFERENCE values for validation, not measurements
+sensor:
+  model: "Velodyne HDL-64E"
+  beams: 64
+  nominal_frequency_hz: 10.0
+  nominal_fov_horizontal_deg: 360.0
+  nominal_fov_vertical_deg: 26.8
+  point_fields: ["x", "y", "z", "reflectance"]
+  bytes_per_point: 16     # 4 float32 values × 4 bytes each
+
+# Processing parameters
+processing:
+  # Range filtering
+  range_min_m: 0.0        # Minimum range to include (0 = no filter)
+  range_max_m: null       # Maximum range to include (null = no filter)
+
+# Output configuration
+output:
+  # Directory for results (relative to experiment directory)
+  results_dir: "results"
+  figures_dir: "figures"
+
+  # Output formats
+  save_csv: true
+  save_json: true
+  save_plots: true
+
+  # Plot settings
+  plot_dpi: 150
+  plot_format: "png"      # png or svg
