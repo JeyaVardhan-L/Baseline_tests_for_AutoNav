@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-EXP-01 — LiDAR Dataset Characterization
+EXP-01  -  LiDAR Dataset Characterization
 
 Analyzes LiDAR point-cloud data from the KITTI Odometry dataset to measure:
   - Points per frame, frame sizes, data rates
@@ -132,7 +132,7 @@ def load_kitti_bin(filepath: Path) -> np.ndarray:
     """
     Load a KITTI Velodyne .bin file.
 
-    Each point is stored as 4 × float32: (x, y, z, reflectance).
+    Each point is stored as 4 x float32: (x, y, z, reflectance).
 
     Returns:
         np.ndarray of shape (N, 4) where N is the number of points.
@@ -247,9 +247,9 @@ def compute_summary(
     data_rate_gb_per_min = data_rate_mb_per_s * 60 / 1024
     data_rate_gb_per_hour = data_rate_gb_per_min * 60
 
-    # Peak memory: largest frame × 4 bytes per float32 value, plus overhead
+    # Peak memory: largest frame x 4 bytes per float32 value, plus overhead
     max_pts = max(points)
-    peak_memory_bytes = max_pts * 4 * 4  # N points × 4 fields × 4 bytes
+    peak_memory_bytes = max_pts * 4 * 4  # N points x 4 fields x 4 bytes
     # Add ~50% overhead for NumPy arrays, ranges, etc.
     peak_memory_bytes_with_overhead = int(peak_memory_bytes * 1.5)
 
@@ -334,7 +334,7 @@ def generate_plots(
 
     dpi = config["output"].get("plot_dpi", 150)
     fmt = config["output"].get("plot_format", "png")
-    dataset_label = f"{summary.dataset_name} — Seq {summary.sequence} ({summary.sensor_model})"
+    dataset_label = f"{summary.dataset_name} (Terrestrial Automotive)  -  Seq {summary.sequence} ({summary.sensor_model})"
     saved_files = []
 
     def save_fig(fig, name):
@@ -409,15 +409,15 @@ def generate_plots(
 
     # 5. Processing time per frame
     fig, ax = plt.subplots(figsize=(12, 5))
-    ax.plot(indices, load_times, linewidth=0.8, color="#2196F3", alpha=0.7, label="Load time")
-    ax.plot(indices, proc_times, linewidth=0.8, color="#FF9800", alpha=0.7, label="Process time")
+    ax.plot(indices, load_times, linewidth=0.8, color="#2196F3", alpha=0.7, label="Disk read time")
+    ax.plot(indices, proc_times, linewidth=0.8, color="#FF9800", alpha=0.7, label="Stats compute time")
     total_times = [l + p for l, p in zip(load_times, proc_times)]
-    ax.plot(indices, total_times, linewidth=0.8, color="#F44336", alpha=0.7, label="Total time")
+    ax.plot(indices, total_times, linewidth=0.8, color="#F44336", alpha=0.7, label="Host total latency")
     ax.axhline(np.mean(total_times), color="#F44336", linestyle="--", linewidth=1,
-               label=f"Mean total: {np.mean(total_times):.1f} ms")
+               label=f"Mean host total: {np.mean(total_times):.1f} ms")
     ax.set_xlabel("Frame Index")
-    ax.set_ylabel("Time (ms)")
-    ax.set_title(f"Processing Time per Frame\n{dataset_label}")
+    ax.set_ylabel("Host Execution Latency (ms)")
+    ax.set_title(f"Host Execution Latency per Frame\n{dataset_label}\n[Host disk I/O & CPU stats only; sensor hardware acquisition period = 100 ms nominal]")
     ax.legend()
     ax.grid(True, alpha=0.3)
     save_fig(fig, "05_processing_time")
@@ -458,7 +458,7 @@ def generate_plots(
         ax.set_xlabel("X (m)")
         ax.set_ylabel("Y (m)")
         ax.set_title(
-            f"Bird's-Eye View — Frame {frame_metrics[mid_idx].frame_index}\n"
+            f"Bird's-Eye View  -  Frame {frame_metrics[mid_idx].frame_index}\n"
             f"{dataset_label}\n"
             f"({frame_metrics[mid_idx].num_points:,} points, colored by reflectance)"
         )
@@ -552,7 +552,7 @@ def discover_bin_files(data_dir: Path) -> list[Path]:
 def run_experiment(config: dict) -> None:
     """Run the full LiDAR characterization experiment."""
     print("=" * 70)
-    print("EXP-01 — LiDAR Dataset Characterization")
+    print("EXP-01  -  LiDAR Dataset Characterization")
     print("=" * 70)
     print()
 
@@ -568,9 +568,9 @@ def run_experiment(config: dict) -> None:
             print()
             print("Expected structure:")
             print(f"  {data_dir}/")
-            print("  ├── 000000.bin")
-            print("  ├── 000001.bin")
-            print("  └── ...")
+            print("  |-- 000000.bin")
+            print("  |-- 000001.bin")
+            print("  `-- ...")
             sys.exit(1)
 
     if not data_dir.exists():
@@ -650,33 +650,34 @@ def run_experiment(config: dict) -> None:
 
     # --- Print summary ---
     print("=" * 70)
-    print("SUMMARY")
+    print("EXP-01 SUMMARY (Classification: MEASURED, DERIVED, ASSUMED, ESTIMATED)")
     print("=" * 70)
-    print(f"  Dataset:              {summary.dataset_name}")
+    print(f"  Dataset:              {summary.dataset_name} (Terrestrial Automotive)")
     print(f"  Sequence:             {summary.sequence}")
     print(f"  Sensor:               {summary.sensor_model}")
-    print(f"  Frames processed:     {summary.total_frames}")
-    print(f"  Estimated duration:   {summary.estimated_duration_s} s")
+    print(f"  Frames processed:     {summary.total_frames:<10d} [MEASURED frame count]")
+    print(f"  Sensor frequency:     {summary.nominal_frequency_hz:<10.1f} Hz [ASSUMED manufacturer spec]")
+    print(f"  Estimated duration:   {summary.estimated_duration_s:<10.2f} s [DERIVED = frames / nominal_hz]")
     print()
-    print(f"  Total points:         {summary.total_points:,}")
-    print(f"  Avg points/frame:     {summary.avg_points_per_frame:,.0f}")
-    print(f"  Min points/frame:     {summary.min_points_per_frame:,}")
-    print(f"  Max points/frame:     {summary.max_points_per_frame:,}")
-    print(f"  Std points/frame:     {summary.std_points_per_frame:,.0f}")
+    print(f"  Total points:         {summary.total_points:<10,d} [MEASURED sum]")
+    print(f"  Avg points/frame:     {summary.avg_points_per_frame:<10,.0f} [MEASURED mean]")
+    print(f"  Min points/frame:     {summary.min_points_per_frame:<10,d} [MEASURED min]")
+    print(f"  Max points/frame:     {summary.max_points_per_frame:<10,d} [MEASURED max]")
+    print(f"  Std points/frame:     {summary.std_points_per_frame:<10,.0f} [MEASURED std]")
     print()
-    print(f"  Avg frame size:       {summary.avg_frame_size_bytes / 1024:.1f} KB")
-    print(f"  Data rate:            {summary.data_rate_mb_per_s:.2f} MB/s")
-    print(f"  Data volume:          {summary.data_rate_gb_per_min:.3f} GB/min")
-    print(f"                        {summary.data_rate_gb_per_hour:.2f} GB/hour")
+    print(f"  Avg frame size:       {summary.avg_frame_size_bytes / 1024:<10.1f} KiB ({summary.avg_frame_size_bytes / 1e6:.3f} MB) [MEASURED file size]")
+    print(f"  Estimated data rate:  {summary.data_rate_mb_per_s:<10.2f} MiB/s ({summary.avg_frame_size_bytes * summary.nominal_frequency_hz / 1e6:.2f} MB/s) [DERIVED using assumed 10.0 Hz]")
+    print(f"  Estimated storage:    {summary.data_rate_gb_per_min:<10.3f} GiB/min [DERIVED using assumed 10.0 Hz]")
+    print(f"                        {summary.data_rate_gb_per_hour:<10.2f} GiB/hour [DERIVED using assumed 10.0 Hz]")
     print()
-    print(f"  Range (global min):   {summary.global_range_min_m:.2f} m")
-    print(f"  Range (global max):   {summary.global_range_max_m:.2f} m")
-    print(f"  Range (mean):         {summary.overall_range_mean_m:.2f} m")
+    print(f"  Range (global min):   {summary.global_range_min_m:<10.2f} m [MEASURED]")
+    print(f"  Range (global max):   {summary.global_range_max_m:<10.2f} m [MEASURED]")
+    print(f"  Range (mean):         {summary.overall_range_mean_m:<10.2f} m [MEASURED]")
     print()
-    print(f"  Avg load time:        {summary.avg_load_time_ms:.2f} ms")
-    print(f"  Avg process time:     {summary.avg_process_time_ms:.2f} ms")
-    print(f"  Peak frame memory:    {summary.peak_frame_memory_mb:.2f} MB")
-    print(f"  Total processing:     {summary.total_processing_time_s:.2f} s")
+    print(f"  Avg disk load time:   {summary.avg_load_time_ms:<10.2f} ms [MEASURED host CPU I/O latency]")
+    print(f"  Avg process time:     {summary.avg_process_time_ms:<10.2f} ms [MEASURED Python stats latency]")
+    print(f"  Theor. frame buffer:  {summary.peak_frame_memory_mb:<10.2f} MiB [DERIVED raw float32 buffer + array]")
+    print(f"  Total processing:     {summary.total_processing_time_s:<10.2f} s [MEASURED wall time]")
     print("=" * 70)
     print()
 
@@ -728,7 +729,7 @@ def run_experiment(config: dict) -> None:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="EXP-01 — LiDAR Dataset Characterization",
+        description="EXP-01  -  LiDAR Dataset Characterization",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

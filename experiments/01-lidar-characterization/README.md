@@ -20,62 +20,69 @@ This is the first step before any algorithm development. We need to understand t
 
 ## Hypothesis
 
-Based on the KITTI dataset using a Velodyne HDL-64E at 10 Hz with ~100,000 points/frame:
+Based on the KITTI dataset specifications (Velodyne HDL-64E, nominal 10 Hz, nominal ~100,000 points/frame):
 
-- Each frame should be approximately 100,000 × 16 bytes = ~1.6 MB
-- Data rate should be approximately 16 MB/s raw
-- Loading a frame into NumPy should take < 10 ms on a modern CPU
-- Total memory for a single frame should be ~2-5 MB including overhead
+- Each frame size: ~100,000 × 16 bytes = ~1.6 MB (*DERIVED from 100k points and 4 × float32 fields*)
+- Data rate: ~16 MB/s raw (*DERIVED using assumed 10.0 Hz nominal sensor rate*)
+- Loading a frame into NumPy: < 10 ms on a modern CPU (*HYPOTHESIS / TO BE MEASURED*)
+- Buffer memory for a single frame: ~2–5 MB (*ESTIMATED HYPOTHESIS / TO BE MEASURED*)
 
-**These are hypotheses. They will be verified or refuted by measurement.**
+**These are hypotheses and derivations. They will be verified or refuted by actual measurement.**
 
 ## Why This Matters
 
-- Determines the **data rate** our onboard computer must handle
-- Determines the **memory** needed for point-cloud buffers
-- Determines the **communication bandwidth** if any data is transmitted
-- Provides **baseline understanding** for all subsequent LiDAR experiments
-- Helps evaluate whether **low-cost LiDARs** (with fewer points) are feasible
+- Establishes a **computational baseline** for point-cloud data rates and I/O load
+- Determines the **memory footprint** needed for raw point-cloud buffers
+- Provides an upper-bound baseline for evaluating future lightweight UAV LiDAR options
+- Does **NOT** prove any specific UAV LiDAR or computer is suitable; it only establishes baseline processing limits
 
 ## Dataset
 
-| Field | Value |
-|-------|-------|
-| Name | KITTI Odometry |
-| Source | Karlsruhe Institute of Technology |
-| URL | https://www.cvlibs.net/datasets/kitti/eval_odometry.php |
-| Sensor | Velodyne HDL-64E |
-| Sequence | 00 (or configurable) |
-| Point format | Binary `.bin` — float32 (x, y, z, reflectance) |
-| Frequency | 10 Hz (nominal) |
-| License | CC BY-NC-SA 3.0 |
-| Download date | NOT YET DOWNLOADED |
-| Subset size | First 200 frames (configurable) |
+> ⚠️ **CRITICAL NOTE ON DATASET CONTEXT:**
+> The KITTI dataset is a **terrestrial automotive dataset** recorded from a car driving through urban and suburban environments.
+> It is **NOT** a UAV dataset, and the Velodyne HDL-64E (~13 kg, ~60 W) is **NOT** a UAV-mountable sensor for a < 2 kg micro-UAV.
+> KITTI is used here exclusively as an established, publicly documented **data-volume and processing benchmark** to measure raw point-cloud ingestion, parsing speed, and memory usage.
 
-### Why KITTI?
+| Field | Value | Classification |
+|-------|-------|----------------|
+| Name | KITTI Vision Benchmark Suite — Odometry | Sourced Fact |
+| Type | Terrestrial Automotive (Roof-mounted on car) | Sourced Fact |
+| Source | Karlsruhe Institute of Technology / Toyota Technological Institute at Chicago | Sourced Fact |
+| URL | https://www.cvlibs.net/datasets/kitti/eval_odometry.php | Sourced Fact |
+| Sensor | Velodyne HDL-64E (64-beam mechanical spinning LiDAR) | Sourced Fact |
+| Sequence | 00 (residential loop, ~4,541 frames total) | Sourced Fact |
+| Point format | Binary `.bin` — little-endian IEEE float32 (x, y, z, reflectance) | Sourced Fact |
+| Nominal Frequency | 10.0 Hz | ASSUMED from manufacturer spec (unmeasured) |
+| License | Creative Commons Attribution-NonCommercial-ShareAlike 3.0 | Sourced Fact |
+| Download status | NOT YET DOWNLOADED (Local data required) | Operational Status |
+| Evaluation subset | First 20–50 frames for initial test (configurable) | Experiment Parameter |
 
-1. **Simple format**: Binary `.bin` files, one per frame — easy to parse with NumPy
-2. **Well-documented sensor**: Velodyne HDL-64E specifications are publicly available
-3. **Known characteristics**: ~100k points/frame at 10 Hz — allows verification
-4. **Large community**: Published benchmarks for cross-reference
-5. **Individual sequences**: Can download one sequence (~2-4 GB) instead of full 80 GB
-6. **Outdoor environment**: Relevant to outdoor UAV operation
+### Why KITTI for EXP-01 Baseline?
 
-### KITTI Limitations (for our use case)
+1. **Format simplicity**: Uniform binary `.bin` files (one per scan) allow direct parsing with NumPy without external ROS dependencies.
+2. **Authoritative baseline**: Decades of literature use KITTI; sensor characteristics are thoroughly documented.
+3. **Upper-bound processing load**: HDL-64E generates ~100k–120k points/scan, representing a heavy computational load compared to compact UAV LiDARs (~20k–50k points/scan). If our ingestion pipeline cannot handle KITTI, it will struggle with high-throughput streams.
 
-- **Ground vehicle**: Data collected from a car, not a UAV
-- **Expensive sensor**: HDL-64E is a large, high-end, 64-beam LiDAR — not representative of UAV-class sensors
-- **Ground perspective**: Viewpoint is from road level, not aerial
+### Limitations of KITTI for UAV Autonomy
 
-These limitations are acceptable for EXP-01 because we are characterizing **data properties**, not testing navigation algorithms.
+- **Terrestrial vehicle perspective**: Ground-plane dominated, 2D planar motion bias, road surface features.
+- **Sensor mass & power mismatch**: HDL-64E cannot fly on a micro-UAV (< 2 kg).
+- **Does not represent UAV flight dynamics**: No 6-DoF aggressive pitch/roll, rotor vibrations, or aerial look-down angles.
 
-### Download Instructions
+### Download & Placement Instructions
 
-1. Go to https://www.cvlibs.net/datasets/kitti/eval_odometry.php
-2. Register / log in
-3. Download "Velodyne point clouds" (80 GB for all, or find individual sequence links)
-4. For a minimal test, download only sequence 00
-5. Extract to: `datasets/kitti/sequences/00/velodyne/`
+The official KITTI Odometry dataset is hosted on the Karlsruhe Institute of Technology portal.
+
+1. Navigate to: [http://www.cvlibs.net/datasets/kitti/eval_odometry.php](http://www.cvlibs.net/datasets/kitti/eval_odometry.php)
+2. Register an academic/research account and log in.
+3. Under **Download odometry data set (Velodyne laser data)**:
+   - Download the laser archive (or sequence 00).
+4. Extract sequence 00 into the repository under:
+   `datasets/kitti/sequences/00/velodyne/`
+5. Verify the files exist:
+   `datasets/kitti/sequences/00/velodyne/000000.bin`
+   `datasets/kitti/sequences/00/velodyne/000001.bin`
+   ...
 
 Expected directory structure:
 ```
