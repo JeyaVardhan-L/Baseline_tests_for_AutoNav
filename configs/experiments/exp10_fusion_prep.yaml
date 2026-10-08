@@ -1,0 +1,7 @@
+# Experiment 10: Sensor Fusion Preparation Config
+experiment:
+  id: "EXP-10"
+  name: "sensor_fusion_preparation"
+  description: "Verify conceptual architecture boundaries and guidance setpoint interfaces"
+parameters:
+  verify_contracts: true

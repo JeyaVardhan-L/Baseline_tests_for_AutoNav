@@ -1,0 +1,12 @@
+{
+  "frames_analyzed": 10,
+  "resolution": "320x240",
+  "avg_valid_percent": 100.0,
+  "avg_mean_depth_m": 3.889,
+  "avg_median_depth_m": 3.9,
+  "avg_frame_mb": 0.513,
+  "avg_latency_ms": 11.46,
+  "p95_latency_ms": 20.31,
+  "processing_fps": 87.3,
+  "process_ram_mb": 41.6
+}

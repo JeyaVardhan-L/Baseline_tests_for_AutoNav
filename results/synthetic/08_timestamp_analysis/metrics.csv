@@ -1,0 +1,11 @@
+index,modality,timestamp,nearest_imu_offset_ms
+0,lidar,0.0,0.0
+1,lidar,0.1,0.0
+2,lidar,0.2,0.0
+3,lidar,0.3,0.0
+4,lidar,0.4,0.0
+5,lidar,0.5,0.0
+6,lidar,0.6,0.0
+7,lidar,0.7,0.0
+8,lidar,0.8,0.0
+9,lidar,0.9,0.0

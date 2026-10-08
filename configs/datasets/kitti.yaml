@@ -1,0 +1,15 @@
+# KITTI Vision Benchmark Suite Configuration (Automotive Reference)
+dataset:
+  name: kitti
+  display_name: "KITTI Vision Benchmark Suite (Automotive Reference)"
+  type: automotive_reference
+  default_root: "datasets/kitti"
+  nominal_rates:
+    lidar_hz: 10.0
+    camera_hz: 10.0
+    gps_hz: 100.0
+  sensors:
+    lidar: "Velodyne HDL-64E Mechanical LiDAR"
+    camera: "Point Grey Flea2 Stereo"
+    imu_gps: "OXTS RT3003"
+  disclaimer: "Optional computational reference baseline only; not representative of UAV dynamics or payloads."

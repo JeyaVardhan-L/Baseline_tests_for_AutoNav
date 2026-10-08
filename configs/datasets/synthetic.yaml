@@ -1,0 +1,14 @@
+# Synthetic Demonstration Stream Configuration
+dataset:
+  name: synthetic
+  display_name: "Synthetic Demonstration Stream"
+  type: synthetic_multimodal
+  default_root: null
+  nominal_rates:
+    lidar_hz: 10.0
+    depth_hz: 30.0
+    imu_hz: 200.0
+  sensors:
+    lidar: "Algorithmic 3D Room Point Cloud (100k pts)"
+    depth: "Algorithmic 320x240 Pinhole Depth Model"
+    imu: "Synthesized 200 Hz Accelerometer & Gyro"

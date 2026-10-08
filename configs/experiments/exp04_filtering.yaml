@@ -1,0 +1,9 @@
+# Experiment 04: Point Cloud Filtering Config
+experiment:
+  id: "EXP-04"
+  name: "pointcloud_filtering"
+  description: "Evaluate point and memory reduction via NaN removal, range bounding, and voxel downsampling"
+parameters:
+  voxel_size: 0.20
+  min_range: 0.5
+  max_range: 30.0

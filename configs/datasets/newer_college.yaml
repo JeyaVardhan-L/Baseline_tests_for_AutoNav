@@ -1,0 +1,14 @@
+# Oxford Newer College Dataset Configuration
+dataset:
+  name: newer_college
+  display_name: "Oxford Newer College Dataset"
+  type: lidar_multimodal
+  default_root: "datasets/newer-college"
+  nominal_rates:
+    lidar_hz: 10.0
+    imu_hz: 100.0
+    camera_hz: 30.0
+  sensors:
+    lidar: "Ouster OS-1-64"
+    imu: "Ouster Built-in 6-Axis MEMS"
+    camera: "Intel RealSense D435i"

@@ -1,0 +1,9 @@
+# Experiment 06: Depth Characterization Config
+experiment:
+  id: "EXP-06"
+  name: "depth_characterization"
+  description: "Evaluate RGB-D depth image statistics, valid coverage, and 3D back-projection"
+parameters:
+  max_frames: 30
+  min_depth: 0.2
+  max_depth: 10.0

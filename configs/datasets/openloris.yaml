@@ -1,0 +1,15 @@
+# OpenLORIS-Scene Dataset Configuration
+dataset:
+  name: openloris
+  display_name: "OpenLORIS-Scene Indoor Robot Dataset"
+  type: rgbd_imu
+  default_root: "datasets/openloris"
+  nominal_rates:
+    depth_hz: 30.0
+    rgb_hz: 30.0
+    imu_hz: 200.0
+    odom_hz: 20.0
+  sensors:
+    camera: "Intel RealSense D435i Active Stereo"
+    imu: "RealSense Internal IMU"
+    laser_2d: "Planar Single-Line Scanner"

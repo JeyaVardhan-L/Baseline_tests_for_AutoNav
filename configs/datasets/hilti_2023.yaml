@@ -1,0 +1,14 @@
+# Hilti SLAM Challenge 2023 Dataset Configuration
+dataset:
+  name: hilti_2023
+  display_name: "Hilti SLAM Challenge 2023 Robot Dataset"
+  type: robot_multimodal
+  default_root: "datasets/hilti-2023"
+  nominal_rates:
+    lidar_hz: 10.0
+    imu_hz: 200.0
+    camera_hz: 20.0
+  sensors:
+    lidar: "Robosense Bpearl Dome LiDAR"
+    imu: "XSens MTi-600 Industrial IMU"
+    camera: "Luxonis OAK-D"

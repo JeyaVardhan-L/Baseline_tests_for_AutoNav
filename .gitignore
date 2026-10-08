@@ -7,6 +7,8 @@ datasets/raw/
 datasets/downloaded/
 datasets/**/*.bin
 datasets/**/*.bag
+datasets/**/*.mcap
+datasets/**/*.db3
 datasets/**/*.pcd
 datasets/**/*.ply
 datasets/**/*.las
@@ -15,6 +17,10 @@ datasets/**/*.zip
 datasets/**/*.tar.gz
 datasets/**/*.tar
 datasets/**/*.7z
+datasets/**/*.png
+datasets/**/*.jpg
+datasets/**/*.jpeg
+
 
 # ---- Experiment raw data ----
 experiments/**/raw/

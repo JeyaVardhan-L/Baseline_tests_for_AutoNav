@@ -1,0 +1,7 @@
+# Experiment 01: Dataset Inspection Config
+experiment:
+  id: "EXP-01"
+  name: "dataset_inspection"
+  description: "Identify files, formats, frame counts, and corruption in local datasets"
+parameters:
+  max_files_inspect: 500

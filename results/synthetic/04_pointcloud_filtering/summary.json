@@ -1,0 +1,7 @@
+{
+  "raw_points": 65536,
+  "filtered_points": 10337,
+  "reduction_percent": 84.23,
+  "voxel_size_m": 0.3,
+  "total_latency_ms": 163.255
+}

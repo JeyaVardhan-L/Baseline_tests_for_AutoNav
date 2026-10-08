@@ -1,0 +1,32 @@
+{
+  "name": "Synthetic Demonstration Stream",
+  "root_path": "synthetic://in-memory",
+  "sensor_types": [
+    "LIDAR",
+    "DEPTH_CAMERA",
+    "IMU"
+  ],
+  "total_files": 100,
+  "total_bytes": 104857600,
+  "total_mb": 100.0,
+  "file_formats": [
+    ".synthetic",
+    ".in-memory"
+  ],
+  "available_streams": [
+    "lidar_points",
+    "depth_images",
+    "imu_readings"
+  ],
+  "frame_count": 100,
+  "approx_duration_s": 10.0,
+  "nominal_rate_hz": 10.0,
+  "observed_rate_hz": 10.0,
+  "is_rate_measured": true,
+  "missing_frames_count": 0,
+  "malformed_files_count": 0,
+  "metadata": {
+    "source": "In-memory synthetic simulation",
+    "purpose": "Tutorial and unit testing"
+  }
+}

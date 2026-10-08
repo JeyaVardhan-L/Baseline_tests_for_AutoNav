@@ -1,0 +1,8 @@
+# Experiment 08: Timestamp & Synchronization Config
+experiment:
+  id: "EXP-08"
+  name: "timestamp_analysis"
+  description: "Measure nearest-neighbor cross-sensor synchronization offsets"
+parameters:
+  max_lidar_frames: 50
+  max_imu_samples: 1000

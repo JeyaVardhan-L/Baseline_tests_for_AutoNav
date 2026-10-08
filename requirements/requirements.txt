@@ -1,0 +1,10 @@
+# Core dependencies for autonav_baseline
+numpy>=1.24.0
+matplotlib>=3.7.0
+pyyaml>=6.0.0
+psutil>=5.9.0
+scipy>=1.10.0
+pandas>=2.0.0
+
+# Optional 3D visualization (install if available on your platform)
+# open3d>=0.17.0

@@ -1,0 +1,13 @@
+# TUM RGB-D Benchmark Configuration
+dataset:
+  name: tum_rgbd
+  display_name: "TUM RGB-D Benchmark"
+  type: rgbd_mocap
+  default_root: "datasets/tum-rgbd"
+  nominal_rates:
+    depth_hz: 30.0
+    rgb_hz: 30.0
+    mocap_hz: 100.0
+  sensors:
+    camera: "Microsoft Kinect RGB-D"
+    ground_truth: "OptiTrack / Vicon Optical MoCap"

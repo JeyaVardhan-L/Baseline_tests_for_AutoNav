@@ -1,0 +1,8 @@
+# Experiment 02: LiDAR Characterization Config
+experiment:
+  id: "EXP-02"
+  name: "lidar_characterization"
+  description: "Measure LiDAR points, bytes, rates, and spatial range distributions"
+parameters:
+  max_frames: 50
+  expected_hz: 10.0
