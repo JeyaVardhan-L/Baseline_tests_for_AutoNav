@@ -4,7 +4,7 @@ This experiment package extends the AutoNav evidence-gathering repository withou
 
 ## Dataset choice and scope
 
-Primary candidate: the Intel Research Lab 2D laser dataset distributed through the Robotics Data Set Repository (Radish). Radish describes its records as real-robot laser/odometry logs and lists a Creative Commons Attribution licence. A commonly used mirror is the Freiburg SLAM evaluation Intel log. The downloader accepts an explicit URL because mirrors and hosting availability can change; verify the source and checksum before using it in a paper.
+Primary candidate: the Intel Research Lab 2D laser dataset distributed through the Robotics Data Set Repository (Radish). The Intel Research Lab log is commonly distributed by the Freiburg SLAM evaluation dataset page. A clear per-recording licence was not verified, so verify terms with the host before redistribution or commercial use. The downloader accepts an explicit URL because mirrors and hosting availability can change; verify the source and checksum before using it in a paper.
 
 Dataset documentation: https://radish.sourceforge.net/  
 Common mirror: https://raw.githubusercontent.com/PRBonn/ir-mcl/main/data/intel.clf (verify availability before relying on it).  
