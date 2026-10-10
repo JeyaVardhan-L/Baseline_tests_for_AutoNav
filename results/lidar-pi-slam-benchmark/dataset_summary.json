@@ -1,0 +1,39 @@
+{
+  "input": "/home/priyangshu/Baseline_tests_for_AutoNav/data/lidar-pi-slam-benchmark/intel.clf",
+  "scan_count": 13631,
+  "range_count_per_scan": 180,
+  "first_timestamp": 976052857.33753,
+  "last_timestamp": 976055548.624744,
+  "duration_seconds": 2691.296360015869,
+  "nominal_hz_from_median_interval": 9.475344766629505,
+  "timestamp_interval_seconds_positive_only": {
+    "mean": 0.22521340174806678,
+    "median": 0.1055370569229126,
+    "p95": 0.8023210644721985,
+    "p99": 1.5682111239433347,
+    "max": 3.484637975692749
+  },
+  "non_increasing_timestamp_transitions": 631,
+  "valid_range_count": 2453580,
+  "range_m": {
+    "min": 0.2,
+    "median": 2.01,
+    "max": 81.83
+  },
+  "odometry_fields_present": true,
+  "odometry_is_ground_truth": false,
+  "system": {
+    "timestamp_utc": "2026-10-10T10:45:15.630991+00:00",
+    "platform": "Linux-6.18.50+rpt-rpi-2712-aarch64-with-glibc2.41",
+    "machine": "aarch64",
+    "python": "3.13.5 (main, Aug 10 2026, 12:06:59) [GCC 14.2.0]",
+    "cpu_count": 4,
+    "pid": 12163,
+    "ram_total_bytes": 8449769472,
+    "cpu_percent_snapshot": 0.0,
+    "process_rss_bytes": 147144704,
+    "cpu_temperature_c": 47.95,
+    "throttled_state": "throttled=0x0",
+    "cpu_governor": "ondemand"
+  }
+}

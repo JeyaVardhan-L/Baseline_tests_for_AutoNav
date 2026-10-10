@@ -4,13 +4,13 @@
 
 | Metric | Value |
 |---|---|
-| Frames Benchmarked | 10 [MEASURED] |
+| Frames Benchmarked | 100 [MEASURED] |
 | Sensor Frequency | 10.0 Hz [ASSUMED] |
 | Sensor Period Budget | 100.00 ms [DERIVED] |
-| Total Pipeline Mean | 164.49 ms [MEASURED] |
-| Total Pipeline P95 | 167.28 ms [MEASURED] |
-| Mean Available Margin | -64.49 ms [DERIVED] |
-| P95 Available Margin | -67.28 ms [DERIVED] |
+| Total Pipeline Mean | 113.56 ms [MEASURED] |
+| Total Pipeline P95 | 115.88 ms [MEASURED] |
+| Mean Available Margin | -13.56 ms [DERIVED] |
+| P95 Available Margin | -15.88 ms [DERIVED] |
 | Real-Time Pass Rate | 0.0% [DERIVED] |
 | Host Real-Time Status | CANNOT KEEP UP (LAG OCCURS) [DERIVED] |
 
