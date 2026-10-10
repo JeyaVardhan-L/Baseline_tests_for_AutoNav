@@ -33,11 +33,13 @@ def parse_flaser_line(line: str, line_number: int = 0):
         n = int(fields[1])
         if n < 2:
             raise ValueError("scan must contain at least two ranges")
-        required = 2 + n + 5
+        required = 2 + n + 8
         if len(fields) < required:
             raise ValueError(f"declares {n} ranges but has only {max(0, len(fields)-2)} fields after type/count")
         ranges = [float(v) for v in fields[2:2+n]]
-        x, y, theta, timestamp, odom_timestamp = map(float, fields[2+n:2+n+5])
+        x, y, theta = map(float, fields[2+n:2+n+3])
+        # CARMEN FLASER carries odometry pose, laser pose, then scan and odometry timestamps.
+        timestamp, odom_timestamp = map(float, fields[2+n+6:2+n+8])
         if not all(math.isfinite(v) for v in ranges + [x, y, theta, timestamp, odom_timestamp]):
             raise ValueError("non-finite numeric field")
         if any(r < 0 for r in ranges):
