@@ -60,6 +60,8 @@ Beginners should run **two verified steps** in order:
    ```
    *Estimates vehicle motion between consecutive point clouds, computes drift, measures per-scan latency, and plots the estimated 3D trajectory.*
 
+   > See [**Complete Beginner Tutorial**](docs/00-start-here/tutorial_first_pipeline.md) for a detailed walkthrough with graph interpretation and parameter explanations.
+
 ### 4. Which dataset is used first, and why?
 - **Primary Public Dataset**: **Oxford Newer College Dataset**. It was recorded on a handheld rig moving through historic college quads with aggressive 6-DoF angular rates (pitch, roll, yaw) closely mimicking UAV flight turbulence. It provides 64-beam 3D LiDAR (Ouster OS-1-64), built-in IMU, and millimeter ground-truth laser maps.
 - **Immediate Offline Testing**: **Synthetic Demonstration Stream**. Provides in-memory geometric corridors and obstacles without downloading gigabytes of external data, enabling immediate smoke testing.

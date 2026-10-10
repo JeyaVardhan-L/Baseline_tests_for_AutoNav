@@ -42,6 +42,7 @@ Start reading in this exact order:
 3. [`point-cloud-basics.md`](point-cloud-basics.md): What is a 3D point and how is it stored in memory?
 4. [`timestamps.md`](timestamps.md): Why clocks and microsecond timing determine safety.
 5. [`realtime-processing.md`](realtime-processing.md): Deadlines, margins, latency, and CPU capacity.
+6. [**First Pipeline Tutorial**](tutorial_first_pipeline.md): Step-by-step tutorial running dataset inspection and LiDAR ICP odometry in Windows PowerShell.
 
 ---
 
