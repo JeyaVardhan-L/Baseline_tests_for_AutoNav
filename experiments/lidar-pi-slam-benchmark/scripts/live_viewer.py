@@ -81,8 +81,11 @@ class Handler(BaseHTTPRequestHandler):
             with self.state_lock:
                 state = dict(self.state)
             state["running"] = bool(time.time() - self.state_seen < 3.0)
-            state["map_available"] = (DEFAULT_OUT / "live_map.png").exists() or (DEFAULT_OUT / "slam_map.png").exists()
-            state["map_updated_at"] = state.get("map_updated_at")
+            map_path = DEFAULT_OUT / "live_map.png"
+            if not map_path.exists():
+                map_path = DEFAULT_OUT / "slam_map.png"
+            state["map_available"] = map_path.exists()
+            state["map_updated_at"] = str(map_path.stat().st_mtime_ns) if map_path.exists() else None
             return self.send_bytes(200, json.dumps(state).encode(), "application/json")
         if path == "/map.png":
             candidate = DEFAULT_OUT / "live_map.png"
@@ -111,12 +114,12 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_bytes(400, str(exc).encode(), "text/plain")
 
 def main():
+    global DEFAULT_OUT
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--host", default="0.0.0.0", help="Bind address; use 127.0.0.1 to restrict to this machine")
     p.add_argument("--port", type=int, default=8765)
     p.add_argument("--output-dir", type=Path, default=DEFAULT_OUT)
     args = p.parse_args()
-    global DEFAULT_OUT
     DEFAULT_OUT = args.output_dir.expanduser().resolve()
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     print(f"AutoNav live viewer: http://<PI-LAN-IP>:{args.port}")
