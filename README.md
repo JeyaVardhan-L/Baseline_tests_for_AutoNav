@@ -12,129 +12,125 @@ Repository: [https://github.com/JeyaVardhan-L/Baseline_tests_for_AutoNav.git](ht
 
 ## What this project is
 
-This repository is simultaneously:
-1. **An Engineering Laboratory**: A reproducible suite of empirical benchmarks measuring actual sensor data streams, buffer footprints, filtering latencies, and CPU bottlenecks.
-2. **A Zero-Knowledge Tutorial**: A complete, step-by-step educational guide allowing anyone with zero prior robotics knowledge to understand how 3D point clouds, depth maps, and inertial sensors become autonomous navigation inputs.
-3. **An Evidence Ledger**: A disciplined scientific record where every reported number is strictly categorized as `[MEASURED]`, `[DERIVED]`, `[ASSUMED]`, or `[ESTIMATED]`.
+This repository is an offline research and evaluation laboratory for an autonomous UAV navigation feasibility study. We do not have the target LiDAR, onboard companion computer, or physical UAV airframe yet.
+
+Our mission is to use publicly available sensor datasets and synthetic demonstration streams to:
+1. **Characterize sensor data requirements**: Data rates, point densities, memory footprints, and storage bounds.
+2. **Measure real-time processing costs**: Filtering latencies, downsampling overhead, algorithm execution time, and CPU/RAM usage.
+3. **Evaluate baseline navigation algorithms**: Starting with a minimal, understandable LiDAR scan-to-scan odometry baseline.
+4. **Gather empirical evidence**: Inform future hardware selection (communication buses, single-core CPU speeds, onboard RAM ceilings) based on measured facts rather than guesswork.
+
+Repository: [https://github.com/JeyaVardhan-L/Baseline_tests_for_AutoNav.git](https://github.com/JeyaVardhan-L/Baseline_tests_for_AutoNav.git)
 
 ---
 
-## Why this project exists
+## Authoritative "Start Here" Guide for Beginners
 
-A common failure mode in student and amateur robotics projects is buying expensive hardware prematurely:
-- Teams purchase an embedded computer before knowing whether their sensor data rate will saturate its USB bus.
-- Teams buy a heavy LiDAR before knowing if its point processing latency will blow past real-time deadlines.
-- Teams make architectural assumptions without empirical measurements.
+If you are new to the repository, read this section first. It provides immediate answers to key architectural and workflow questions:
 
-Our engineering leadership has challenged us:
-> *"Do not tell me you think you need a LiDAR or a Jetson. Show me you measured X, Y, and Z on authentic sensor streams — therefore you require a sensor and computer with these exact specifications."*
+### 1. What problem is this repository solving?
+Before purchasing an expensive UAV airframe, companion computer (e.g. Raspberry Pi 5, Jetson Orin), or 3D LiDAR, we must know if our computational algorithms can process incoming sensor scans within the sensor arrival period ($T_s = 1 / f_s$, e.g., 100 ms for 10 Hz LiDAR). This repository profiles those algorithms on recorded and synthetic data to establish empirical feasibility.
 
-We cannot purchase hardware based on guesswork. This repository exists to produce the empirical evidence that justifies every hardware decision before spending money.
-
----
-
-## The engineering question
-
-The eventual engineering question this research will inform is:
-
-> **"What sensor and onboard computing capability would an autonomous UAV need to navigate safely in GPS-denied environments?"**
-
-**BUT WE DO NOT ANSWER THAT QUESTION YET.**  
-We are currently in the evidence-gathering phase. We only collect empirical data, measure execution latencies, and isolate computational bottlenecks.
-
----
-
-## Current scope
-
-The scope of this repository is strictly limited to:
-- Ingesting and characterizing authentic multi-modal robotics datasets (LiDAR, RGB-D, IMU).
-- Profiling memory consumption and data rates (MB/s, GiB/hour).
-- Measuring execution latencies for invalid point rejection, range bounding, and 3D voxel downsampling.
-- Evaluating real-time compute margins against sensor arrival periods ($T_s = 1000 / f_s$).
-- Benchmarking nearest-neighbor cross-sensor timestamp synchronization.
-- Defining formal architectural data contracts between mission control, autonomous navigation, and low-level flight stabilization.
-
----
-
-## What this project is NOT
-
-To maintain absolute scientific discipline, this project is **NOT**:
-- **NOT currently building the physical UAV airframe.**
-- **NOT choosing or purchasing commercial flight hardware.**
-- **NOT implementing PX4 or ArduPilot motor mixers or flight dynamics.**
-- **NOT running live outdoor flight tests.**
-- **NOT benchmarking or tuning complex SLAM algorithms.**
-- **NOT training AI or machine learning models.**
-- **NOT fabricating experimental results or assuming real-world performance without measurement.**
-
----
-
-## Architecture
-
-The system is organized into a clean, modular three-tier architecture:
-
+### 2. What is the complete data-to-results workflow?
+Every valid experiment in this project follows an 8-step discipline:
 ```
-+------------------------------------------------------------------------+
-| TIER 1: HIGH-LEVEL MISSION CONTROL (Ground Station / Supervisor)       |
-| Directives: "Survey designated 50m x 50m sector at 5m/s"               |
-+------------------------------------------------------------------------+
-                                  |
-                                  v
-+------------------------------------------------------------------------+
-| TIER 2: AUTONOMOUS NAVIGATION (Companion Computer / GPU)               |
-| - Sensor Ingestion (LiDAR 10Hz, Camera 30Hz, IMU 200Hz)                |
-| - State Estimation (LiDAR-Inertial Odometry / EKF Pose)                |
-| - Local Mapping (3D Volumetric Voxel Octree / Free Space Detection)   |
-| - Trajectory Planning (3D Collision-Free Spline Generation)            |
-| - Guidance Tracking (Position, Velocity, and Yaw Rate Setpoints)       |
-+------------------------------------------------------------------------+
-                                  | (MAVLink / microXRCE-DDS Setpoints)
-                                  v
-+------------------------------------------------------------------------+
-| TIER 3: LOW-LEVEL FLIGHT CONTROL (Autopilot: PX4 / ArduPilot at 500Hz) |
-| - Fast Inner Feedback Loops (Attitude & Rate Dampers)                  |
-| - Motor ESC PWM / DShot Mixing                                         |
-| - Failsafe Protection & Aerodynamic Stabilization                      |
-+------------------------------------------------------------------------+
+1. Select Dataset  --> 2. Inspect Files  --> 3. Load Scans  --> 4. Run Navigation Method
+                                                                          |
+8. Hardware Sizing <-- 7. Compare Methods <-- 6. Generate Reports <-- 5. Profile Costs
 ```
+1. **Select Dataset**: Pick an authentic public recording or in-memory synthetic stream.
+2. **Inspect Files**: Measure file sizes, formats, sensor modalities, and verify file health.
+3. **Load Scans**: Read actual 3D points and true timestamps through a normalized adapter interface.
+4. **Run Navigation Method**: Execute an algorithm (e.g. scan-to-scan ICP odometry) on consecutive frames.
+5. **Profile Costs**: Measure wall-clock latency per scan, process CPU %, and RAM consumption (RSS).
+6. **Generate Reports**: Save machine-readable JSON/CSV, summary Markdown, and question-driven graphs.
+7. **Compare Methods**: Repeat with different filtering, voxel sizes, or algorithms.
+8. **Hardware Sizing**: Derive bus bandwidth, CPU IPC, and memory requirements from empirical measurements.
+
+### 3. Which experiment should a beginner run first?
+Beginners should run **two verified steps** in order:
+1. **Step 1 — Dataset Inspection**:
+   ```powershell
+   python experiments/01-data-inspection/run.py --dataset synthetic
+   ```
+   *Inspects data format, total byte footprint, discovered streams, and frame counts.*
+2. **Step 2 — Minimal LiDAR ICP Odometry**:
+   ```powershell
+   python experiments/02-lidar-odometry-icp/run.py --dataset synthetic --max-frames 20
+   ```
+   *Estimates vehicle motion between consecutive point clouds, computes drift, measures per-scan latency, and plots the estimated 3D trajectory.*
+
+### 4. Which dataset is used first, and why?
+- **Primary Public Dataset**: **Oxford Newer College Dataset**. It was recorded on a handheld rig moving through historic college quads with aggressive 6-DoF angular rates (pitch, roll, yaw) closely mimicking UAV flight turbulence. It provides 64-beam 3D LiDAR (Ouster OS-1-64), built-in IMU, and millimeter ground-truth laser maps.
+- **Immediate Offline Testing**: **Synthetic Demonstration Stream**. Provides in-memory geometric corridors and obstacles without downloading gigabytes of external data, enabling immediate smoke testing.
+
+### 5. Which navigation method is being evaluated first?
+**LiDAR-Only Iterative Closest Point (ICP) Scan-to-Scan Odometry**.
+It iteratively matches points between consecutive scans, computes the optimal rigid transformation ($R, t$) via Singular Value Decomposition (SVD), and accumulates relative transformations into an estimated vehicle trajectory. It serves as our understandable baseline before evaluating complex SLAM or sensor-fusion pipelines.
+
+### 6. Where do the outputs and graphs appear?
+All experiment runs write their artifacts to:
+`results/<dataset>/<experiment_name>/`
+- `summary.json`: Complete statistical dictionary with metric classifications and provenance.
+- `metrics.csv`: Per-frame tabular measurements (latency, point count, translation step).
+- `metadata.json`: Host machine OS, CPU, RAM, Python version, and execution timestamp.
+- `summary.md`: Human-readable Markdown report with findings and observations.
+- `figures/`: High-resolution PNG graphs answering specific engineering questions.
+
+### 7. What do the principal evaluation metrics mean?
+Every reported metric is categorized with an explicit scientific evidence tag:
+- **Points per Frame** `[MEASURED]`: Total valid 3D $(x,y,z)$ coordinates in a scan.
+- **Observed Frame Rate** `[MEASURED]`: $1 / \Delta t$ derived from actual recorded timestamps (if timestamps are missing, marked `[UNAVAILABLE]`).
+- **Nominal Sensor Rate** `[ASSUMED]`: Manufacturer datasheet rate (e.g. 10.0 Hz).
+- **Processing Latency** `[MEASURED]`: High-resolution wall-clock execution time for registering a scan.
+- **Real-Time Margin** `[DERIVED]`: $T_{\text{deadline}} - \text{Latency}_{\text{P95}}$. Positive means host keeps up; negative means pipeline falls behind.
+- **Process Memory (RSS)** `[MEASURED]`: Resident set size memory consumed by the Python process.
+- **Process CPU %** `[MEASURED]`: Utilization percentage of host CPU during registration.
 
 ---
 
-## Learning roadmap
+## Implementation Status Matrix
 
-For readers with zero prior background in robotics, follow this reading path:
+To prevent confusion, the components of this repository are classified explicitly:
 
-1. [**Robotics Basics**](docs/00-start-here/robotics-basics.md): Coordinates, 6-DoF poses, and the 5 navigation questions.
-2. [**Sensor Basics**](docs/00-start-here/sensor-basics.md): What are LiDARs, Depth Cameras, and IMUs?
-3. [**Point Cloud Basics**](docs/00-start-here/point-cloud-basics.md): How 3D points are stored in computer memory.
-4. [**Timestamps & Clocks**](docs/00-start-here/timestamps.md): Why microsecond timing determines flight safety.
-5. [**Real-Time Processing**](docs/00-start-here/realtime-processing.md): Sensor deadlines, latency percentiles, and compute margins.
-6. [**Tools Guide**](docs/02-tools/): Why we use Python, NumPy, Matplotlib, and Open3D.
-7. [**Core Concepts**](docs/03-concepts/): Data rates, bandwidth, jitter, and coordinate transformations.
-
----
-
-## Dataset roadmap
-
-We replaced older automotive baselines with datasets recorded on **mobile robots and handheld 6-DoF platforms**:
-
-| Dataset | Platform & Sensors | Role | Docs |
+| Component | File Path | Status | Role & Verification Level |
 |---|---|---|---|
-| **Oxford Newer College** | Ouster OS-1 64-beam LiDAR, IMU, RealSense D435i | **PRIMARY LiDAR Learning Dataset** | [`newer-college.md`](docs/01-datasets/newer-college.md) |
-| **Hilti SLAM 2023** | Robosense Bpearl LiDAR (10Hz), XSens IMU (200Hz), OAK-D | **Mobile Robot Benchmark** | [`hilti-2023.md`](docs/01-datasets/hilti-2023.md) |
-| **OpenLORIS-Scene** | RealSense RGB-D, IMU, Wheel Odometry, 2D Laser | **Indoor Robot Depth/Camera Benchmark** | [`openloris-scene.md`](docs/01-datasets/openloris-scene.md) |
-| **TUM RGB-D** | Microsoft Kinect RGB-D, Optical MoCap 6-DoF | **Beginner-Friendly Depth Dataset** | [`tum-rgbd.md`](docs/01-datasets/tum-rgbd.md) |
-| **Oxford Spires** | Multi-session LiDAR, Vision, mm RTK-GPS | **Advanced Reference (Later Phases)** | [`oxford-spires.md`](docs/01-datasets/oxford-spires.md) |
-| **KITTI** | Velodyne HDL-64E, Automotive Cameras, GPS | **Automotive Reference Baseline (Optional)** | [`kitti.md`](docs/01-datasets/kitti.md) |
+| **Base Dataset Adapter** | `src/autonav_baseline/datasets/base.py` | **IMPLEMENTED** | Normalized `LiDARFrame`, `DepthFrame`, `IMUFrame`, and inspection interfaces. |
+| **Synthetic Stream** | `src/autonav_baseline/datasets/synthetic.py` | **IMPLEMENTED** | In-memory 3D corridor, ground plane, depth maps, and IMU. Fully verified in unit tests. |
+| **Newer College Adapter** | `src/autonav_baseline/datasets/newer_college.py` | **IMPLEMENTED** | Validated inspection, `.npy`, `.bin`, `.pcd`, `.ply` parsing, honest timestamp reading. |
+| **KITTI Adapter** | `src/autonav_baseline/datasets/kitti.py` | **PARTIAL** | Automotive baseline only; binary file reader. Not representative of UAV dynamics. |
+| **Hilti SLAM Adapter** | `src/autonav_baseline/datasets/hilti.py` | **PARTIAL** | Directory inspection; full multi-modal streaming requires local dataset download. |
+| **TUM RGB-D Adapter** | `src/autonav_baseline/datasets/tum_rgbd.py` | **PARTIAL** | Depth/RGB image reader for handheld indoor sequences. |
+| **Oxford Spires Adapter** | `src/autonav_baseline/datasets/oxford_spires.py` | **PLACEHOLDER** | Advanced multi-session dataset reserved for later research phases. |
+| **OpenLORIS Adapter** | `src/autonav_baseline/datasets/openloris.py` | **PLACEHOLDER** | Ground-robot multi-modal stream placeholder. |
+| **LiDAR Preprocessing** | `src/autonav_baseline/lidar/filtering.py` | **IMPLEMENTED** | Invalid removal, range bounding, voxel downsampling, statistical outlier filtering. |
+| **ICP Odometry (Core Baseline)** | `src/autonav_baseline/lidar/odometry.py` | **IMPLEMENTED** | Scan-to-scan 3D ICP odometry, SVD motion estimation, trajectory accumulation. |
+| **Metrics & Profiler** | `src/autonav_baseline/timing/`, `metrics/` | **IMPLEMENTED** | Latency distributions (mean, median, P95), CPU/RAM monitoring, evidence classification. |
+| **Reporting Exporter** | `src/autonav_baseline/reporting/exporter.py` | **IMPLEMENTED** | Standardized JSON, CSV, Markdown, and metadata export with sanitized paths. |
+| **2D LiDAR Simulation** | `experiments/11-2d-lidar-slam-simulation/` | **SIMULATION ONLY** | Simplified 2D planar educational simulation. Not for 3D UAV evaluation. |
+| **Pi 5 SLAM Benchmark** | `experiments/lidar-pi-slam-benchmark/` | **HARDWARE SPECIFIC** | Dedicated 2D benchmark scripts for Raspberry Pi 5. Non-core for desktop evaluation. |
+| **Browser Live Viewer** | `experiments/lidar-pi-slam-benchmark/` | **EXPERIMENTAL** | Browser-based visualization helper. Non-core for beginner pipeline. |
 
 ---
 
-## Software roadmap
+## 7-Stage Research Roadmap
 
-- **Phase 1 (Current)**: Pure Python / NumPy experiment framework, dataset adapters, synthetic streams, and metric profilers. (Zero external compilation required).
-- **Phase 2**: Real-time C++ point cloud downsampling kernels, ROS 2 node wrappers, and SIMD/AVX acceleration.
-- **Phase 3**: Software-In-The-Loop (SITL) simulation with Gazebo / PX4.
-- **Phase 4**: Embedded hardware bench testing on physical companion computers.
+This roadmap defines the planned sequence of research activities. Stages marked **[IMPLEMENTED]** can be executed right now; future stages are explicitly marked **[PLANNED]**:
+
+- **Stage 1: Validate Dataset Loading & Inspection** `[IMPLEMENTED]`  
+  Inspect directory structure, file formats, frame counts, data rates, and verify that actual timestamps and point cloud coordinates load honestly without fake placeholders.
+- **Stage 2: Establish LiDAR-Only Odometry Baseline** `[IMPLEMENTED]`  
+  Implement and profile minimal 3D scan-to-scan ICP odometry. Measure per-scan registration time, CPU/RAM usage, and accumulate estimated trajectory.
+- **Stage 3: Validate Baseline Against Ground Truth** `[PLANNED]`  
+  Compute Absolute Trajectory Error (ATE) and Relative Pose Error (RPE) against millimeter Leica ground truth once recorded dataset poses are aligned.
+- **Stage 4: Evaluate Preprocessing & Downsampling Trade-Offs** `[PLANNED]`  
+  Measure how voxel grid size ($0.05\text{ m}$ vs $0.20\text{ m}$) impacts registration latency versus trajectory drift.
+- **Stage 5: Evaluate Second Navigation Method (LiDAR-Inertial Fusion)** `[PLANNED]`  
+  Integrate high-rate IMU angular rates with scan registration to handle fast rotational maneuvers.
+- **Stage 6: Cross-Dataset Generalization** `[PLANNED]`  
+  Benchmark identical algorithms across Hilti 2023, TUM RGB-D, and OpenLORIS to assess environmental robustness.
+- **Stage 7: Empirical Hardware Sizing & Selection** `[PLANNED]`  
+  Translate measured data rates and tail latencies (P95/P99) into formal specifications for communication buses, companion computer CPU cores, and onboard RAM.
 
 ---
 
