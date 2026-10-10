@@ -25,30 +25,76 @@ def classify_timing(scheduled_ns: int, start_ns: int, finish_ns: int, period_ns:
         "deadline_missed": finish_ns > scheduled_ns + period_ns,
     }
 
+
 def parse_flaser_line(line: str, line_number: int = 0):
     fields = line.strip().split()
     if not fields or fields[0] != "FLASER":
         return None
+
     try:
         n = int(fields[1])
         if n < 2:
             raise ValueError("scan must contain at least two ranges")
-        required = 2 + n + 8
-        if len(fields) < required:
-            raise ValueError(f"declares {n} ranges but has only {max(0, len(fields)-2)} fields after type/count")
-        ranges = [float(v) for v in fields[2:2+n]]
-        x, y, theta = map(float, fields[2+n:2+n+3])
-        # CARMEN FLASER carries odometry pose, laser pose, then scan and odometry timestamps.
-        timestamp, odom_timestamp = map(float, fields[2+n+6:2+n+8])
-        if not all(math.isfinite(v) for v in ranges + [x, y, theta, timestamp, odom_timestamp]):
+
+        # FLASER n ranges laser_x laser_y laser_theta
+        #       odom_x odom_y odom_theta ipc_timestamp hostname logger_timestamp
+        pose_start = 2 + n
+        expected_min = pose_start + 9
+
+        if len(fields) < expected_min:
+            raise ValueError(
+                f"declares {n} ranges but record has only "
+                f"{len(fields)} fields"
+            )
+
+        ranges = [float(v) for v in fields[2:pose_start]]
+
+        # Laser pose
+        laser_x, laser_y, laser_theta = map(
+            float, fields[pose_start:pose_start + 3]
+        )
+
+        # Odometry pose
+        odom_x, odom_y, odom_theta = map(
+            float, fields[pose_start + 3:pose_start + 6]
+        )
+
+        # Logger metadata follows the odometry pose.
+        ipc_timestamp = float(fields[pose_start + 6])
+        hostname = fields[pose_start + 7]
+        logger_timestamp = float(fields[pose_start + 8])
+
+        numeric_values = (
+            ranges
+            + [
+                laser_x, laser_y, laser_theta,
+                odom_x, odom_y, odom_theta,
+                ipc_timestamp, logger_timestamp,
+            ]
+        )
+
+        if not all(math.isfinite(v) for v in numeric_values):
             raise ValueError("non-finite numeric field")
         if any(r < 0 for r in ranges):
             raise ValueError("negative range")
-        return {"ranges_m": ranges, "x_m": x, "y_m": y, "theta_rad": theta,
-                "timestamp": timestamp, "odom_timestamp": odom_timestamp,
-                "line_number": line_number}
+
+        # Use the IPC timestamp for scan ordering and replay timing.
+        return {
+            "ranges_m": ranges,
+            "x_m": odom_x,
+            "y_m": odom_y,
+            "theta_rad": odom_theta,
+            "timestamp": ipc_timestamp,
+            "odom_timestamp": logger_timestamp,
+            "hostname": hostname,
+            "line_number": line_number,
+        }
+
     except (ValueError, IndexError) as exc:
-        raise ValueError(f"Malformed FLASER record on line {line_number}: {exc}") from exc
+        raise ValueError(
+            f"Malformed FLASER record on line {line_number}: {exc}"
+        ) from exc
+
 
 def load_scans(path: Path):
     scans = []
@@ -63,8 +109,16 @@ def load_scans(path: Path):
     if len(lengths) != 1:
         raise ValueError(f"Inconsistent scan lengths found: {sorted(lengths)}")
     times = [s["timestamp"] for s in scans]
-    if any(b <= a for a, b in zip(times, times[1:])):
-        raise ValueError("Scan timestamps must be strictly increasing; refusing ambiguous replay timing")
+    non_increasing = sum(
+        b <= a for a, b in zip(times, times[1:])
+    )
+    if non_increasing:
+        print(
+            f"WARNING: {non_increasing} non-increasing source timestamp "
+            "transitions found. Preserving original scan order. "
+            "Paced replay uses the configured replay rate.",
+            file=sys.stderr,
+        )
     return scans
 
 def percentile(values, p):
@@ -116,18 +170,34 @@ def make_slam(scan_size, hz, args):
     slam = RMHC_SLAM(laser, args.map_pixels, args.map_meters, random_seed=args.seed)
     return slam
 
-def odom_delta(prev, cur):
-    dx, dy = cur["x_m"] - prev["x_m"], cur["y_m"] - prev["y_m"]
+def odom_delta(prev, cur, dt_override=None, fallback_dt=None):
+    dx = cur["x_m"] - prev["x_m"]
+    dy = cur["y_m"] - prev["y_m"]
     dxy_mm = math.hypot(dx, dy) * 1000.0
     dtheta_deg = math.degrees(cur["theta_rad"] - prev["theta_rad"])
-    # wrap heading delta to [-180, 180]
     dtheta_deg = (dtheta_deg + 180.0) % 360.0 - 180.0
-    dt = cur["timestamp"] - prev["timestamp"]
+
+    source_dt = cur["timestamp"] - prev["timestamp"]
+    if dt_override is not None:
+        dt = dt_override
+    elif source_dt > 0:
+        dt = source_dt
+    else:
+        dt = fallback_dt if fallback_dt is not None else 0.0
+
     return dxy_mm, dtheta_deg, dt
 
-def slam_one(slam, scan, previous, args):
-    ranges_mm = [min(int(round(r * 1000)), int(args.max_range_m*1000)) if r > 0 else 0 for r in scan["ranges_m"]]
-    pose_change = (0, 0, 0) if previous is None else odom_delta(previous, scan)
+
+def slam_one(slam, scan, previous, args, dt_override=None, fallback_dt=None):
+    ranges_mm = [
+        min(int(round(r * 1000)), int(args.max_range_m * 1000)) if r > 0 else 0
+        for r in scan["ranges_m"]
+    ]
+    pose_change = (
+        (0, 0, 0)
+        if previous is None
+        else odom_delta(previous, scan, dt_override, fallback_dt)
+    )
     slam.update(ranges_mm, pose_change=pose_change)
     return slam.getpos()
 
@@ -142,47 +212,117 @@ def write_csv(path, rows):
 
 def command_verify(args):
     scans = load_scans(Path(args.input))
-    intervals = [b["timestamp"]-a["timestamp"] for a,b in zip(scans, scans[1:])]
-    ranges = [r for s in scans for r in s["ranges_m"] if r > 0]
-    summary = {"input": str(Path(args.input).resolve()), "scan_count": len(scans),
-       "range_count_per_scan": len(scans[0]["ranges_m"]), "first_timestamp": scans[0]["timestamp"],
-       "last_timestamp": scans[-1]["timestamp"], "duration_seconds": scans[-1]["timestamp"]-scans[0]["timestamp"],
-       "nominal_hz_from_median_interval": 1/statistics.median(intervals),
-       "timestamp_interval_seconds": stats(intervals), "valid_range_count": len(ranges),
-       "range_m": {"min": min(ranges), "median": statistics.median(ranges), "max": max(ranges)} if ranges else None,
-       "odometry_fields_present": True, "odometry_is_ground_truth": False,
-       "system": system_metadata()}
+    intervals = [
+        b["timestamp"] - a["timestamp"]
+        for a, b in zip(scans, scans[1:])
+    ]
+    positive_intervals = [dt for dt in intervals if dt > 0]
+    non_increasing = sum(dt <= 0 for dt in intervals)
+
+    if not positive_intervals:
+        raise ValueError("Dataset has no positive timestamp intervals")
+
+    ranges = [r for scan in scans for r in scan["ranges_m"] if r > 0]
+    timestamps = [scan["timestamp"] for scan in scans]
+
+    summary = {
+        "input": str(Path(args.input).resolve()),
+        "scan_count": len(scans),
+        "range_count_per_scan": len(scans[0]["ranges_m"]),
+        "first_timestamp": scans[0]["timestamp"],
+        "last_timestamp": scans[-1]["timestamp"],
+        "duration_seconds": max(timestamps) - min(timestamps),
+        "nominal_hz_from_median_interval": 1 / statistics.median(positive_intervals),
+        "timestamp_interval_seconds_positive_only": stats(positive_intervals),
+        "non_increasing_timestamp_transitions": non_increasing,
+        "valid_range_count": len(ranges),
+        "range_m": {
+            "min": min(ranges),
+            "median": statistics.median(ranges),
+            "max": max(ranges),
+        } if ranges else None,
+        "odometry_fields_present": True,
+        "odometry_is_ground_truth": False,
+        "system": system_metadata(),
+    }
+
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT/"dataset_summary.json").write_text(json.dumps(summary, indent=2))
+    (OUT / "dataset_summary.json").write_text(json.dumps(summary, indent=2))
+    if non_increasing:
+        print(
+            f"WARNING: {non_increasing} non-increasing timestamp transitions. "
+            "Statistics use positive intervals only; original scan order is preserved.",
+            file=sys.stderr,
+        )
     print(json.dumps(summary, indent=2))
 
 def command_offline(args):
     scans = load_scans(Path(args.input))
     OUT.mkdir(parents=True, exist_ok=True)
+
+    intervals = [
+        b["timestamp"] - a["timestamp"]
+        for a, b in zip(scans, scans[1:])
+    ]
+    positive_intervals = [dt for dt in intervals if dt > 0]
+    if not positive_intervals:
+        raise ValueError("Dataset has no positive timestamp intervals")
+    fallback_dt = statistics.median(positive_intervals)
+
     allrows, run_summaries = [], []
-    for run in range(1, args.runs+1):
+    for run in range(1, args.runs + 1):
         slam = make_slam(len(scans[0]["ranges_m"]), args.hz, args)
         lat_ms, poses = [], []
-        # Warm-up is included in algorithm state but excluded from reported timings.
+        run_started_ns = time.perf_counter_ns()
+
+        # Warm-up scans affect algorithm state but are excluded from latency stats.
         for i, scan in enumerate(scans):
-            prev = scans[i-1] if i else None
+            prev = scans[i - 1] if i else None
             t0 = time.perf_counter_ns()
-            pose = slam_one(slam, scan, prev, args)
-            elapsed = (time.perf_counter_ns()-t0)/1e6
+            pose = slam_one(
+                slam, scan, prev, args, fallback_dt=fallback_dt
+            )
+            elapsed = (time.perf_counter_ns() - t0) / 1e6
+
             if i >= args.warmup:
                 lat_ms.append(elapsed)
-                allrows.append({"run":run,"scan_index":i,"processing_ms":elapsed,
-                                "pose_x_mm":pose[0],"pose_y_mm":pose[1],"pose_theta_deg":pose[2]})
+                allrows.append({
+                    "run": run,
+                    "scan_index": i,
+                    "processing_ms": elapsed,
+                    "pose_x_mm": pose[0],
+                    "pose_y_mm": pose[1],
+                    "pose_theta_deg": pose[2],
+                })
             poses.append(pose)
-        run_summaries.append({"run":run,"scans_total":len(scans),"timed_scans":len(lat_ms),
-                              "total_wall_seconds":sum(lat_ms)/1000.0,"latency_ms":stats(lat_ms)})
+
+        wall_seconds = (time.perf_counter_ns() - run_started_ns) / 1e9
+        run_summaries.append({
+            "run": run,
+            "scans_total": len(scans),
+            "timed_scans": len(lat_ms),
+            "total_wall_seconds": wall_seconds,
+            "sum_timed_processing_seconds": sum(lat_ms) / 1000.0,
+            "latency_ms": stats(lat_ms),
+        })
+
         if run == args.runs:
             save_map_and_trajectory(slam, poses, args)
-    write_csv(OUT/"offline_runs.csv", allrows)
-    summary = {"mode":"offline","input":str(Path(args.input).resolve()),"runs":run_summaries,
-               "system":system_metadata(),"note":"per-scan timings exclude dataset parsing and SLAM construction; warm-up scans excluded"}
-    (OUT/"offline_summary.json").write_text(json.dumps(summary,indent=2))
-    print(json.dumps(summary,indent=2))
+
+    write_csv(OUT / "offline_runs.csv", allrows)
+    summary = {
+        "mode": "offline",
+        "input": str(Path(args.input).resolve()),
+        "runs": run_summaries,
+        "system": system_metadata(),
+        "note": (
+            "Wall time covers the scan loop including warm-up; per-scan latency "
+            "excludes warm-up. Dataset parsing and SLAM construction are excluded. "
+            "Nonpositive source timestamp deltas use the median positive interval."
+        ),
+    }
+    (OUT / "offline_summary.json").write_text(json.dumps(summary, indent=2))
+    print(json.dumps(summary, indent=2))
 
 def save_map_and_trajectory(slam, poses, args):
     try:
@@ -206,38 +346,86 @@ def save_map_and_trajectory(slam, poses, args):
 
 def command_paced(args):
     scans = load_scans(Path(args.input))
-    hz=args.hz; period_ns=int(period_seconds(hz)*1e9)
-    target_ns=int(args.minutes*60*1e9)
-    slam=make_slam(len(scans[0]["ranges_m"]),hz,args)
-    rows=[]; index=0; started=time.monotonic_ns(); deadline=started
-    previous=None; over=missed=0
-    while time.monotonic_ns()-started < target_ns:
-        scan=scans[index % len(scans)]
-        loop=index//len(scans)
-        scheduled=deadline
-        now=time.monotonic_ns()
+    hz = args.hz
+    period_ns = int(period_seconds(hz) * 1e9)
+    target_ns = int(args.minutes * 60 * 1e9)
+    slam = make_slam(len(scans[0]["ranges_m"]), hz, args)
+
+    rows = []
+    index = 0
+    started = time.monotonic_ns()
+    deadline = started
+    previous = None
+    over = missed = 0
+
+    while time.monotonic_ns() - started < target_ns:
+        source_index = index % len(scans)
+        scan = scans[source_index]
+        loop = index // len(scans)
+
+        scheduled = deadline
+        now = time.monotonic_ns()
         if now < scheduled:
-            time.sleep((scheduled-now)/1e9)
-        actual_start=time.monotonic_ns()
-        pose=slam_one(slam,scan,previous,args)
-        finish=time.monotonic_ns()
-        timing=classify_timing(scheduled,actual_start,finish,period_ns)
-        over += int(timing["processing_budget_exceeded"]); missed += int(timing["deadline_missed"])
-        rows.append({"index":index,"source_scan_index":index%len(scans),"recording_loop":loop,
-          "scheduled_ns":scheduled,"start_ns":actual_start,"finish_ns":finish,
-          **timing,"pose_x_mm":pose[0],"pose_y_mm":pose[1],"pose_theta_deg":pose[2]})
-        previous=scan
-        index+=1; deadline=scheduled+period_ns
-    write_csv(OUT/"paced_scan_timings.csv",rows)
-    durations=[r["processing_duration_ns"]/1e6 for r in rows]
-    lateness=[r["finish_lateness_ns"]/1e6 for r in rows]
-    summary={"mode":"paced","target_hz":hz,"period_ms":period_ns/1e6,"requested_minutes":args.minutes,
-      "scans_processed":len(rows),"processing_budget_exceedances":over,"scheduled_deadline_misses":missed,
-      "processing_latency_ms":stats(durations),"finish_lateness_ms":stats(lateness),
-      "system":system_metadata(),"note":"single-threaded replay has no sensor queue; backlog/queue growth is not measured"}
-    (OUT/"paced_summary.json").write_text(json.dumps(summary,indent=2))
-    save_map_and_trajectory(slam,[ (r["pose_x_mm"],r["pose_y_mm"],r["pose_theta_deg"]) for r in rows],args)
-    print(json.dumps(summary,indent=2))
+            time.sleep((scheduled - now) / 1e9)
+
+        actual_start = time.monotonic_ns()
+        # Do not carry an odometry delta across the end/start of a recording loop.
+        previous_for_update = (
+            None if index > 0 and source_index == 0 else previous
+        )
+        pose = slam_one(
+            slam, scan, previous_for_update, args,
+            dt_override=period_ns / 1e9,
+        )
+        finish = time.monotonic_ns()
+
+        timing = classify_timing(scheduled, actual_start, finish, period_ns)
+        over += int(timing["processing_budget_exceeded"])
+        missed += int(timing["deadline_missed"])
+        rows.append({
+            "index": index,
+            "source_scan_index": source_index,
+            "recording_loop": loop,
+            "scheduled_ns": scheduled,
+            "start_ns": actual_start,
+            "finish_ns": finish,
+            **timing,
+            "pose_x_mm": pose[0],
+            "pose_y_mm": pose[1],
+            "pose_theta_deg": pose[2],
+        })
+
+        previous = scan
+        index += 1
+        deadline = scheduled + period_ns
+
+    write_csv(OUT / "paced_scan_timings.csv", rows)
+    durations = [r["processing_duration_ns"] / 1e6 for r in rows]
+    lateness = [r["finish_lateness_ns"] / 1e6 for r in rows]
+    summary = {
+        "mode": "paced",
+        "target_hz": hz,
+        "period_ms": period_ns / 1e6,
+        "requested_minutes": args.minutes,
+        "scans_processed": len(rows),
+        "processing_budget_exceedances": over,
+        "scheduled_deadline_misses": missed,
+        "processing_latency_ms": stats(durations),
+        "finish_lateness_ms": stats(lateness),
+        "system": system_metadata(),
+        "note": (
+            "Single-threaded replay has no sensor queue; backlog/queue growth "
+            "is not measured. Odometry dt uses the configured replay period, "
+            "and odometry deltas reset at recording-loop boundaries."
+        ),
+    }
+    (OUT / "paced_summary.json").write_text(json.dumps(summary, indent=2))
+    save_map_and_trajectory(
+        slam,
+        [(r["pose_x_mm"], r["pose_y_mm"], r["pose_theta_deg"]) for r in rows],
+        args,
+    )
+    print(json.dumps(summary, indent=2))
 
 def command_plot(args):
     try:
