@@ -2,13 +2,13 @@
 
 ## Candidate
 
-The Intel Research Lab laser dataset is a well-known indoor ground-robot SLAM sequence. Radish is the original-style repository for robotics logs and describes its collection as containing real-robot odometry and laser data under a Creative Commons Attribution licence: https://radish.sourceforge.net/
+The Intel Research Lab laser dataset is a well-known indoor ground-robot SLAM sequence, commonly distributed through the Freiburg SLAM evaluation dataset page: http://ais.informatik.uni-freiburg.de/slamevaluation/datasets.php. Hosting availability is not guaranteed; the downloader supports `DATASET_URL` so a user can supply a verified working URL. Do not cite a mirror as the original data owner.
 
-A commonly used Freiburg SLAM evaluation mirror is referenced by this package as a download candidate. Hosting availability is not guaranteed; the downloader supports `DATASET_URL` so a user can supply a verified working URL. Do not cite a mirror as the original data owner.
+**Licence caveat:** a clear per-recording licence for this Intel log was not verified during repository preparation. Treat it as research/evaluation material, retain attribution, and verify permission from the host before redistribution or commercial use. Do not assume a general Radish licence applies to this separate recording.
 
 ## Format assumptions
 
-The parser accepts CARMEN-style text records beginning with `FLASER`, with a scan count, range values in metres, then x, y, heading, timestamp and odometry timestamp. It preserves input order and timestamps. Any line that starts with FLASER but has a malformed count or too few fields raises an error. Non-FLASER records are ignored because CARMEN logs can include other sensor record types.
+The parser accepts CARMEN-style text records beginning with `FLASER`, with a scan count, range values in metres, odometry x/y/heading, laser x/y/heading, then scan and odometry timestamps. It preserves input order and timestamps. Any line that starts with FLASER but has a malformed count or too few fields raises an error. Non-FLASER records are ignored because CARMEN logs can include other sensor record types.
 
 The script reports inferred angular coverage only as a parameterized estimate when the range count is known; it does not claim an exact field of view or range resolution unless configured from verified dataset metadata. The dataset is from a ground robot, not an aerial vehicle, and its motion/geometry are not representative of a drone-mounted YDLIDAR X2.
 
