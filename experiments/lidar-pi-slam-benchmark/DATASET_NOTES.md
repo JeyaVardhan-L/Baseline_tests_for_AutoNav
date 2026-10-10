@@ -8,7 +8,7 @@ A commonly used Freiburg SLAM evaluation mirror is referenced by this package as
 
 ## Format assumptions
 
-The parser accepts CARMEN-style text records beginning with `FLASER`, with a scan count, range values in metres, odometry x/y/heading, laser x/y/heading, then scan and odometry timestamps. It preserves input order and timestamps. Any line that starts with FLASER but has a malformed count or too few fields raises an error. Non-FLASER records are ignored because CARMEN logs can include other sensor record types.
+The parser accepts CARMEN-style text records beginning with `FLASER`, with a scan count, range values in metres, then x, y, heading, timestamp and odometry timestamp. It preserves input order and timestamps. Any line that starts with FLASER but has a malformed count or too few fields raises an error. Non-FLASER records are ignored because CARMEN logs can include other sensor record types.
 
 The script reports inferred angular coverage only as a parameterized estimate when the range count is known; it does not claim an exact field of view or range resolution unless configured from verified dataset metadata. The dataset is from a ground robot, not an aerial vehicle, and its motion/geometry are not representative of a drone-mounted YDLIDAR X2.
 
