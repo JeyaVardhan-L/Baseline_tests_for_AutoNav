@@ -132,3 +132,81 @@ def plot_imu_intervals(
     ax.grid(True, linestyle=":", alpha=0.6)
     ax.legend(loc="upper right")
     save_plot(fig, output_path)
+
+
+def plot_odometry_trajectory(
+    positions: np.ndarray,
+    output_path: Path,
+    dataset_name: str,
+    path_length_m: float = 0.0,
+) -> None:
+    """Question: What 3D/2D trajectory is estimated by LiDAR scan-to-scan odometry?"""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    fig, (ax_top, ax_side) = plt.subplots(1, 2, figsize=(12, 5))
+
+    if len(positions) == 0:
+        ax_top.text(0.5, 0.5, "No trajectory points", ha="center")
+        ax_side.text(0.5, 0.5, "No trajectory points", ha="center")
+        save_plot(fig, output_path)
+        return
+
+    x = positions[:, 0]
+    y = positions[:, 1]
+    z = positions[:, 2]
+
+    # Top-Down view (X vs Y)
+    ax_top.plot(x, y, color="#1976D2", linewidth=1.5, label="Estimated Path")
+    ax_top.scatter(x[0], y[0], color="#388E3C", s=60, zorder=5, label="Start (0,0)")
+    ax_top.scatter(x[-1], y[-1], color="#D32F2F", s=60, zorder=5, label=f"End ({x[-1]:.2f}, {y[-1]:.2f})")
+    ax_top.set_title(f"Top-Down Trajectory (X-Y Plane)\nPath Length: {path_length_m:.2f} m\nDataset: {dataset_name}", fontsize=9)
+    ax_top.set_xlabel("X (meters)")
+    ax_top.set_ylabel("Y (meters)")
+    ax_top.grid(True, linestyle=":", alpha=0.6)
+    ax_top.legend(loc="best", fontsize=8)
+    ax_top.axis("equal")
+
+    # Side view (X vs Z)
+    ax_side.plot(x, z, color="#7B1FA2", linewidth=1.5, label="Altitude Profile")
+    ax_side.scatter(x[0], z[0], color="#388E3C", s=60, zorder=5)
+    ax_side.scatter(x[-1], z[-1], color="#D32F2F", s=60, zorder=5)
+    ax_side.set_title("Side Profile (X-Z Plane)\nElevation & Altitude Variation", fontsize=9)
+    ax_side.set_xlabel("X (meters)")
+    ax_side.set_ylabel("Z (meters)")
+    ax_side.grid(True, linestyle=":", alpha=0.6)
+    ax_side.legend(loc="best", fontsize=8)
+
+    save_plot(fig, output_path)
+
+
+def plot_dual_point_counts(
+    indices: List[int],
+    raw_counts: List[int],
+    downsampled_counts: List[int],
+    output_path: Path,
+    dataset_name: str,
+) -> None:
+    """Question: How much did voxel grid decimation reduce computational input size?"""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(figsize=(10, 4.5))
+    ax.plot(indices, raw_counts, color="#78909C", linestyle="--", linewidth=1.0, label="Raw Points")
+    ax.plot(indices, downsampled_counts, color="#1976D2", linewidth=1.2, label="Downsampled Points (ICP Input)")
+
+    mean_raw = float(np.mean(raw_counts)) if raw_counts else 0.0
+    mean_down = float(np.mean(downsampled_counts)) if downsampled_counts else 0.0
+    reduction = ((mean_raw - mean_down) / max(mean_raw, 1.0)) * 100.0
+
+    ax.set_title(
+        f"Point Cloud Decimation per Frame\nQuestion: How much did voxel filtering reduce ICP input size? (Avg reduction: {reduction:.1f}%)\nDataset: {dataset_name}",
+        fontsize=10,
+    )
+    ax.set_xlabel("Frame Index")
+    ax.set_ylabel("Points Count")
+    ax.grid(True, linestyle=":", alpha=0.6)
+    ax.legend(loc="upper right")
+    save_plot(fig, output_path)
