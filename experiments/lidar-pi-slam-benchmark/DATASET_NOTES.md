@@ -14,9 +14,9 @@ The script reports inferred angular coverage only as a parameterized estimate wh
 
 ## Licensing and attribution
 
-Radish advertises a Creative Commons Attribution licence for its datasets. Confirm the specific recording's accompanying metadata and licence before redistribution or commercial use. Keep the original dataset citation and source URL with derived results. This repository does not redistribute the dataset.
+A clear licence for this specific Intel recording was not verified. Confirm the host's terms before redistribution or commercial use. Keep source attribution and URL with derived results. This repository does not redistribute the dataset.
 
-Suggested paper citation for the dataset source: Robotics Data Set Repository (Radish), https://radish.sourceforge.net/ (accessed on the date of download). Also cite the dataset's original accompanying paper/metadata where supplied.
+Suggested source reference: Freiburg SLAM evaluation dataset page, http://ais.informatik.uni-freiburg.de/slamevaluation/datasets.php (accessed on the date of download). Also cite original dataset paper/metadata supplied by the host.
 
 ## Known limitations
 
