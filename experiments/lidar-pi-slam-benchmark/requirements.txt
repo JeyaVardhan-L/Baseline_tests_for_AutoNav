@@ -1,0 +1,3 @@
+numpy>=1.26
+matplotlib>=3.8
+# BreezySLAM is intentionally omitted: reuse the working installation in the AutoNav .venv.
