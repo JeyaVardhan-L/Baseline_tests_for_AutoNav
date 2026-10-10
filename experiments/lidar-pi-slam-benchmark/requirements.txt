@@ -1,3 +1,6 @@
 numpy>=1.26
 matplotlib>=3.8
+# Optional, not installed by this file:
+#   psutil>=5.9   RAM / RSS fields in the `system` metadata (omitted with a note if absent)
+#   scipy>=1.10   only scripts/diagnose_inputs.py (ICP reference); not needed to run the benchmark
 # BreezySLAM is intentionally omitted: reuse the working installation in the AutoNav .venv.

@@ -23,3 +23,10 @@ Suggested source reference: Freiburg SLAM evaluation dataset page, http://ais.in
 - Download URL/mirror must be checked at run time; this repository does not claim a dataset download has already succeeded.
 - The CARMEN pose fields are odometry/reference fields, not automatically ground truth.
 - This benchmark is for 2D planar scan computational feasibility. It does not validate altitude estimation, 3D obstacle clearance, sensor vibration, rotor interference, or safe autonomous landing.
+
+## Timestamps and odometry (measured on the committed intel.clf; see `scripts/diagnose_inputs.py`)
+
+- The per-scan timestamp is a message-arrival time. 13,630 intervals: 631 are zero or backwards, 4,552 positive ones are shorter than 20 ms (median positive interval 0.1055 s). They are not scan-to-scan acquisition intervals and must not be used as BreezySLAM `dt` (offline now uses a constant `dt` by default).
+- Odometry drives forward (median 0.4 degrees between displacement direction and heading) but reverses in 67 of 8,803 moving steps, so `dxy` must be signed.
+- Odometry heading drifts relative to the scans (an independent ICP chain differs by about 75 degrees by scan 800). Odometry is not ground truth.
+- Readings of 81.83 m (68,313 of 2,453,580) are the sensor's no-return value. They are currently clamped to the 12 m configured range; the effect on BreezySLAM has not been verified.

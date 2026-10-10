@@ -51,15 +51,56 @@ function set(id,v){$(id).textContent=v===undefined||v===null?'—':v}
 function draw(){const c=$('chart'),ctx=c.getContext('2d'),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);ctx.strokeStyle='#25334c';ctx.fillStyle='#91a2bd';ctx.lineWidth=1;for(let i=0;i<5;i++){let y=10+i*(h-30)/4;ctx.beginPath();ctx.moveTo(38,y);ctx.lineTo(w-8,y);ctx.stroke()}if(!latencies.length)return;const max=Math.max(10,...latencies)*1.15;ctx.fillStyle='#91a2bd';ctx.font='12px system-ui';ctx.fillText(max.toFixed(1)+' ms',3,14);ctx.strokeStyle='#63e6be';ctx.lineWidth=2;ctx.beginPath();latencies.forEach((v,i)=>{let x=38+i*(w-48)/Math.max(1,latencies.length-1),y=h-20-v/max*(h-40);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke()}
 async function refresh(){if(paused)return;try{const r=await fetch('/api/state?ts='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);const d=await r.json();$('dot').classList.toggle('live',!!d.running);set('connection',d.running?'Receiving live updates':'Viewer connected · waiting for new scans');set('scans',d.scans_processed);set('rate',d.scan_rate_hz==null?'—':Number(d.scan_rate_hz).toFixed(2)+' Hz');set('latency',d.processing_ms==null?'—':Number(d.processing_ms).toFixed(2)+' ms');set('pose',d.pose_x_m==null?'—':Number(d.pose_x_m).toFixed(2)+', '+Number(d.pose_y_m).toFixed(2)+' m');set('heading',d.pose_theta_deg==null?'—':Number(d.pose_theta_deg).toFixed(1)+'°');set('updated',d.updated_at||'—');set('temp',d.cpu_temperature_c==null?'—':Number(d.cpu_temperature_c).toFixed(1)+' °C');set('rss',d.process_rss_mb==null?'—':Number(d.process_rss_mb).toFixed(1)+' MB');set('misses',d.deadline_misses);set('mode',d.mode||'—');
 if(d.processing_ms!=null&&d.sample_id!==lastIndex){latencies.push(Number(d.processing_ms));if(latencies.length>100)latencies.shift();lastIndex=d.sample_id;draw()}
+if(!d.map_available){$('map').hidden=true;$('empty').hidden=false;if(d.map_message)$('empty').textContent=d.map_message}
 if(d.map_available){$('map').hidden=false;$('empty').hidden=true;if(d.map_updated_at!==lastMapStamp){$('map').src='/map.png?ts='+Date.now();lastMapStamp=d.map_updated_at;set('mapstamp','Updated '+(d.map_updated_at||''))}}
 }catch(e){$('dot').classList.remove('live');set('connection','Waiting for Pi / viewer server')} }
 setInterval(refresh,500);refresh();
 </script></body></html>"""
 
+LEGACY_MAP = "slam_map.png"  # historical paced map from the 35 m runs; known invalid, never served
+
+
+def resolve_live_map(out_dir: Path, run_started=None):
+    """Return (path, message). Only the live snapshot written by live_publish is ever served.
+
+    There is deliberately no fallback to the unlabelled legacy `slam_map.png` (a 35 m paced
+    map whose pose left the map) nor to final per-mode maps, whose validity is not known here.
+
+    A `live_map.png` is served only if it was written at or after `run_started`, the time the
+    first telemetry of the current benchmark run reached this viewer. A file left over from an
+    earlier run (or from before the viewer started) is reported as stale and not shown, so an
+    old map can never be mistaken for the current run's output.
+    """
+    live = Path(out_dir) / "live_map.png"
+    marker = Path(out_dir) / "live_map.error.txt"  # written by live_publish when a refresh fails
+    if marker.is_file() and run_started is not None:
+        m_time = marker.stat().st_mtime
+        if m_time >= run_started and (not live.is_file() or m_time >= live.stat().st_mtime):
+            lines = [l for l in marker.read_text(encoding="utf-8", errors="replace").splitlines() if l.strip()]
+            reason = lines[-1] if lines else "unknown reason"
+            return None, (f"Live map generation is failing ({reason}). Any earlier live_map.png is hidden "
+                          "because it would no longer be current.")
+    if live.is_file():
+        if run_started is None:
+            return None, ("live_map.png exists but no telemetry has been received from a running "
+                          "benchmark since this viewer started, so it may be left over from an "
+                          "earlier run and is not shown. Waiting for a run to publish.")
+        if live.stat().st_mtime < run_started:
+            return None, ("live_map.png is older than this run's first telemetry (stale, from an "
+                          "earlier run) and is not shown. Waiting for this run's first map snapshot.")
+        return live, None
+    msg = (f"No live_map.png in {out_dir}. Start the benchmark with live publishing enabled "
+           "(see LIVE_VIEWER.md) and point this viewer at the same directory with --output-dir.")
+    if (Path(out_dir) / LEGACY_MAP).exists():
+        msg += f" A legacy {LEGACY_MAP} exists there but is ignored: it is a known-invalid 35 m map."
+    return None, msg
+
+
 class Handler(BaseHTTPRequestHandler):
     state_lock = threading.Lock()
     state = {"running": False, "mode": "waiting"}
     state_seen = 0.0
+    run_started = None  # wall-clock time the current run's first telemetry arrived
 
     def log_message(self, fmt, *args):
         print("%s - %s" % (self.address_string(), fmt % args))
@@ -79,21 +120,21 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_bytes(200, HTML.encode(), "text/html; charset=utf-8")
         if path == "/api/state":
             with self.state_lock:
-                state = dict(self.state)
-            state["running"] = bool(time.time() - self.state_seen < 3.0)
-            map_path = DEFAULT_OUT / "live_map.png"
-            if not map_path.exists():
-                map_path = DEFAULT_OUT / "slam_map.png"
-            state["map_available"] = map_path.exists()
-            state["map_updated_at"] = str(map_path.stat().st_mtime_ns) if map_path.exists() else None
+                state = dict(type(self).state)
+                seen, run_started = type(self).state_seen, type(self).run_started
+            state["running"] = bool(time.time() - seen < 3.0)
+            map_path, map_message = resolve_live_map(DEFAULT_OUT, run_started)
+            state["map_available"] = map_path is not None
+            state["map_message"] = map_message
+            state["map_updated_at"] = str(map_path.stat().st_mtime_ns) if map_path else None
             return self.send_bytes(200, json.dumps(state).encode(), "application/json")
         if path == "/map.png":
-            candidate = DEFAULT_OUT / "live_map.png"
-            if not candidate.exists():
-                candidate = DEFAULT_OUT / "slam_map.png"
-            if candidate.exists():
+            with self.state_lock:
+                run_started = type(self).run_started
+            candidate, message = resolve_live_map(DEFAULT_OUT, run_started)
+            if candidate is not None:
                 return self.send_bytes(200, candidate.read_bytes(), "image/png")
-            return self.send_bytes(404, b"Map not ready", "text/plain")
+            return self.send_bytes(404, message.encode(), "text/plain")
         return self.send_bytes(404, b"Not found", "text/plain")
 
     def do_POST(self):
@@ -106,9 +147,16 @@ class Handler(BaseHTTPRequestHandler):
             payload = json.loads(self.rfile.read(length))
             if not isinstance(payload, dict):
                 raise ValueError("JSON body must be an object")
+            # State lives on the class: `self` is a per-request instance, so assigning to it
+            # (as before) silently discarded every telemetry update.
+            cls, now = type(self), time.time()
             with self.state_lock:
-                self.state = payload
-                self.state_seen = time.time()
+                prev_n, new_n = cls.state.get("scans_processed"), payload.get("scans_processed")
+                counter_reset = isinstance(prev_n, (int, float)) and isinstance(new_n, (int, float)) and new_n < prev_n
+                if cls.run_started is None or now - cls.state_seen > 3.0 or counter_reset:
+                    cls.run_started = now  # a new run: maps written before this are stale
+                cls.state = payload
+                cls.state_seen = now
             return self.send_bytes(200, b'{"ok":true}', "application/json")
         except (ValueError, json.JSONDecodeError) as exc:
             return self.send_bytes(400, str(exc).encode(), "text/plain")
