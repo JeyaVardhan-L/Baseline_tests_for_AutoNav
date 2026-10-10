@@ -37,16 +37,29 @@ def main():
     print_field("Discovered Formats", ", ".join(result.file_formats) if result.file_formats else "None")
     print_field("Available Streams", ", ".join(result.available_streams) if result.available_streams else "None")
     print_field("Total Frame Count", result.frame_count, "frames", "MEASURED")
-    print_field("Approx Duration", round(result.approx_duration_s, 2), "seconds", "DERIVED")
+    dur_str = f"{round(result.approx_duration_s, 2)}" if result.approx_duration_s is not None else "UNAVAILABLE"
+    dur_unit = "seconds" if result.approx_duration_s is not None else ""
+    dur_tag = "DERIVED" if result.approx_duration_s is not None else "UNAVAILABLE"
+    print_field("Approx Duration", dur_str, dur_unit, dur_tag)
 
-    freq_label = "MEASURED" if result.is_rate_measured else "ASSUMED NOMINAL"
-    rate = result.observed_rate_hz if result.is_rate_measured else result.nominal_rate_hz
-    print_field("Sensor Frequency", rate, "Hz", freq_label)
+    if result.is_rate_measured and result.observed_rate_hz is not None:
+        print_field("Sensor Frequency", f"{result.observed_rate_hz:.2f}", "Hz", "MEASURED")
+    elif result.nominal_rate_hz is not None:
+        print_field("Sensor Frequency", f"{result.nominal_rate_hz:.2f}", "Hz", "ASSUMED NOMINAL")
+    else:
+        print_field("Sensor Frequency", "UNAVAILABLE", "", "UNAVAILABLE")
 
     print()
     print_section("INTEGRITY & HEALTH")
-    print_field("Missing Frames", result.missing_frames_count, "count", "DERIVED")
-    print_field("Malformed Files", result.malformed_files_count, "count", "MEASURED")
+    missing_val = result.missing_frames_count if result.missing_frames_count is not None else "UNVERIFIED"
+    missing_unit = "count" if result.missing_frames_count is not None else ""
+    missing_tag = "DERIVED" if result.missing_frames_count is not None else "UNVERIFIED"
+    print_field("Missing Frames", missing_val, missing_unit, missing_tag)
+
+    malformed_val = result.malformed_files_count if result.malformed_files_count is not None else "UNVERIFIED"
+    malformed_unit = "count" if result.malformed_files_count is not None else ""
+    malformed_tag = "MEASURED" if result.malformed_files_count is not None else "UNVERIFIED"
+    print_field("Malformed Files", malformed_val, malformed_unit, malformed_tag)
 
     # Export results
     exporter = ExperimentExporter(args.dataset, "01_data_inspection")

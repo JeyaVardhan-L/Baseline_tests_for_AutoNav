@@ -22,8 +22,8 @@ class SensorType(str, Enum):
 class LiDARFrame:
     """Normalized LiDAR scan."""
     index: int
-    timestamp: float  # seconds (Unix or sequence epoch)
-    points: np.ndarray  # (N, 3) float32 [x, y, z]
+    timestamp: Optional[float] = None  # seconds (Unix or sequence epoch, or None if unmeasured)
+    points: np.ndarray = field(default_factory=lambda: np.zeros((0, 3), dtype=np.float32))  # (N, 3) float32 [x, y, z]
     intensity: Optional[np.ndarray] = None  # (N,) float32
     ring: Optional[np.ndarray] = None  # (N,) int32 laser ring/beam index
     point_timestamps: Optional[np.ndarray] = None  # (N,) float32 per-point time
@@ -47,14 +47,14 @@ class LiDARFrame:
 class DepthFrame:
     """Normalized RGB + Depth frame."""
     index: int
-    timestamp: float  # seconds
-    depth: np.ndarray  # (H, W) float32 in meters
+    timestamp: Optional[float] = None  # seconds
+    depth: np.ndarray = field(default_factory=lambda: np.zeros((0, 0), dtype=np.float32))  # (H, W) float32 in meters
     rgb: Optional[np.ndarray] = None  # (H, W, 3) uint8 RGB image
     camera_metadata: Dict[str, Any] = field(default_factory=dict)
 
     @property
     def resolution(self) -> str:
-        return f"{self.depth.shape[1]}x{self.depth.shape[0]}"
+        return f"{self.depth.shape[1]}x{self.depth.shape[0]}" if self.depth.ndim >= 2 else "0x0"
 
     @property
     def byte_size(self) -> int:
@@ -68,9 +68,9 @@ class DepthFrame:
 class IMUFrame:
     """Normalized IMU reading."""
     index: int
-    timestamp: float  # seconds
-    accel: np.ndarray  # (3,) float32 [ax, ay, az] in m/s^2
-    gyro: np.ndarray  # (3,) float32 [wx, wy, wz] in rad/s
+    timestamp: Optional[float] = None  # seconds
+    accel: np.ndarray = field(default_factory=lambda: np.zeros(3, dtype=np.float32))  # (3,) float32 [ax, ay, az] in m/s^2
+    gyro: np.ndarray = field(default_factory=lambda: np.zeros(3, dtype=np.float32))  # (3,) float32 [wx, wy, wz] in rad/s
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -85,12 +85,12 @@ class DatasetInspectionResult:
     file_formats: List[str]
     available_streams: List[str]
     frame_count: int
-    approx_duration_s: float
-    nominal_rate_hz: Optional[float]
-    observed_rate_hz: Optional[float]
-    is_rate_measured: bool
-    missing_frames_count: int
-    malformed_files_count: int
+    approx_duration_s: Optional[float] = None
+    nominal_rate_hz: Optional[float] = None
+    observed_rate_hz: Optional[float] = None
+    is_rate_measured: bool = False
+    missing_frames_count: Optional[int] = None
+    malformed_files_count: Optional[int] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def summary_dict(self) -> Dict[str, Any]:
@@ -104,9 +104,9 @@ class DatasetInspectionResult:
             "file_formats": self.file_formats,
             "available_streams": self.available_streams,
             "frame_count": self.frame_count,
-            "approx_duration_s": round(self.approx_duration_s, 2),
+            "approx_duration_s": round(self.approx_duration_s, 2) if self.approx_duration_s is not None else None,
             "nominal_rate_hz": self.nominal_rate_hz,
-            "observed_rate_hz": self.observed_rate_hz,
+            "observed_rate_hz": round(self.observed_rate_hz, 3) if self.observed_rate_hz is not None else None,
             "is_rate_measured": self.is_rate_measured,
             "missing_frames_count": self.missing_frames_count,
             "malformed_files_count": self.malformed_files_count,
