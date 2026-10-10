@@ -1,0 +1,38 @@
+{
+  "mode": "paced",
+  "target_hz": 6.0,
+  "period_ms": 166.666666,
+  "requested_minutes": 10.0,
+  "scans_processed": 3601,
+  "processing_budget_exceedances": 0,
+  "scheduled_deadline_misses": 0,
+  "processing_latency_ms": {
+    "mean": 2.0381347389613995,
+    "median": 1.399617,
+    "p95": 5.309929,
+    "p99": 6.70775,
+    "max": 8.439518
+  },
+  "finish_lateness_ms": {
+    "mean": 0.0,
+    "median": 0.0,
+    "p95": 0.0,
+    "p99": 0.0,
+    "max": 0.0
+  },
+  "system": {
+    "timestamp_utc": "2026-10-10T10:57:44.169987+00:00",
+    "platform": "Linux-6.18.50+rpt-rpi-2712-aarch64-with-glibc2.41",
+    "machine": "aarch64",
+    "python": "3.13.5 (main, Aug 10 2026, 12:06:59) [GCC 14.2.0]",
+    "cpu_count": 4,
+    "pid": 12360,
+    "ram_total_bytes": 8449769472,
+    "cpu_percent_snapshot": 0.0,
+    "process_rss_bytes": 131694592,
+    "cpu_temperature_c": 45.2,
+    "throttled_state": "throttled=0x0",
+    "cpu_governor": "ondemand"
+  },
+  "note": "Single-threaded replay has no sensor queue; backlog/queue growth is not measured. Odometry dt uses the configured replay period, and odometry deltas reset at recording-loop boundaries."
+}

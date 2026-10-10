@@ -1,0 +1,91 @@
+{
+  "mode": "offline",
+  "input": "/home/priyangshu/Baseline_tests_for_AutoNav/data/lidar-pi-slam-benchmark/intel.clf",
+  "runs": [
+    {
+      "run": 1,
+      "scans_total": 13631,
+      "timed_scans": 13611,
+      "total_wall_seconds": 15.419885784,
+      "sum_timed_processing_seconds": 15.386356068,
+      "latency_ms": {
+        "mean": 1.130435388141944,
+        "median": 0.739281,
+        "p95": 3.5437469999999998,
+        "p99": 4.135553600000001,
+        "max": 25.952617
+      }
+    },
+    {
+      "run": 2,
+      "scans_total": 13631,
+      "timed_scans": 13611,
+      "total_wall_seconds": 15.534483697,
+      "sum_timed_processing_seconds": 15.500853391,
+      "latency_ms": {
+        "mean": 1.1388475050326943,
+        "median": 0.746448,
+        "p95": 3.5705255,
+        "p99": 4.167035899999999,
+        "max": 5.888989
+      }
+    },
+    {
+      "run": 3,
+      "scans_total": 13631,
+      "timed_scans": 13611,
+      "total_wall_seconds": 15.400919129,
+      "sum_timed_processing_seconds": 15.367534734000001,
+      "latency_ms": {
+        "mean": 1.1290525849680406,
+        "median": 0.740021,
+        "p95": 3.540229,
+        "p99": 4.1343551,
+        "max": 5.817137
+      }
+    },
+    {
+      "run": 4,
+      "scans_total": 13631,
+      "timed_scans": 13611,
+      "total_wall_seconds": 15.814007482,
+      "sum_timed_processing_seconds": 15.780019993,
+      "latency_ms": {
+        "mean": 1.1593578717948718,
+        "median": 0.766244,
+        "p95": 3.5996645,
+        "p99": 4.2099819,
+        "max": 5.868026
+      }
+    },
+    {
+      "run": 5,
+      "scans_total": 13631,
+      "timed_scans": 13611,
+      "total_wall_seconds": 15.823121615,
+      "sum_timed_processing_seconds": 15.78920862,
+      "latency_ms": {
+        "mean": 1.1600329601057968,
+        "median": 0.767245,
+        "p95": 3.596914,
+        "p99": 4.2012372,
+        "max": 5.882712
+      }
+    }
+  ],
+  "system": {
+    "timestamp_utc": "2026-10-10T10:46:56.117041+00:00",
+    "platform": "Linux-6.18.50+rpt-rpi-2712-aarch64-with-glibc2.41",
+    "machine": "aarch64",
+    "python": "3.13.5 (main, Aug 10 2026, 12:06:59) [GCC 14.2.0]",
+    "cpu_count": 4,
+    "pid": 12191,
+    "ram_total_bytes": 8449769472,
+    "cpu_percent_snapshot": 0.0,
+    "process_rss_bytes": 232488960,
+    "cpu_temperature_c": 50.7,
+    "throttled_state": "throttled=0x0",
+    "cpu_governor": "ondemand"
+  },
+  "note": "Wall time covers the scan loop including warm-up; per-scan latency excludes warm-up. Dataset parsing and SLAM construction are excluded. Nonpositive source timestamp deltas use the median positive interval."
+}

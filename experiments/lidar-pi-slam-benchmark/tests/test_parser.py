@@ -10,7 +10,7 @@ spec.loader.exec_module(benchmark)
 
 class ParserTests(unittest.TestCase):
     def test_parse_flaser_record(self):
-        line = "FLASER 4 1.0 2.0 3.0 4.0 1.5 2.5 0.1 1.5 2.5 0.1 123.0 122.9"
+        line = "FLASER 4 1.0 2.0 3.0 4.0 1.5 2.5 0.1 1.5 2.5 0.1 123.0 nohost 122.9"
         scan = benchmark.parse_flaser_line(line, line_number=1)
         self.assertEqual(scan["ranges_m"], [1.0, 2.0, 3.0, 4.0])
         self.assertAlmostEqual(scan["x_m"], 1.5)
