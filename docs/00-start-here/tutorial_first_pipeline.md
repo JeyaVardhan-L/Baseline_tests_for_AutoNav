@@ -57,18 +57,19 @@ You are ready to run the experiments.
 Before running any navigation algorithm on a dataset, we must inspect its file structure, frame count, storage size, and timestamp integrity:
 
 ```powershell
-python experiments/01-data-inspection/run.py --dataset synthetic
+python experiments/01_inspect_dataset.py --dataset newer_college --path datasets/newer-college/01_short_experiment
 ```
 
 ### What the Major Parameters Control:
-- `--dataset synthetic`: Selects the built-in, zero-download synthetic stream. (When real data is downloaded, pass `--dataset newer_college --path <folder>`).
+- `--dataset newer_college`: Selects the Oxford Newer College real dataset adapter.
+- `--path <dir>`: Path to extracted sequence directory containing point clouds and timestamps.
 
 ### What to Look For in the Output:
-- **Discovered Formats**: Confirms actual file extensions discovered on disk.
-- **Sensor Frequency**: Labeled `[MEASURED]` if derived from real recorded timestamps, or `[ASSUMED NOMINAL]` if timestamps are absent.
+- **Discovered Formats**: Confirms actual file extensions discovered on disk (.pcd, .bin, .ply, .npy).
+- **Sensor Frequency**: Labeled `[MEASURED]` if derived from real recorded timestamps, or `[UNAVAILABLE]` if timestamps are absent.
 - **Integrity & Health**: Reports verified missing frame drops and malformed files.
 
-Output files are saved to `results/synthetic/01_data_inspection/`.
+Output files are saved to `results/newer_college/01_data_inspection/`.
 
 ---
 
@@ -77,12 +78,12 @@ Output files are saved to `results/synthetic/01_data_inspection/`.
 Now run the core navigation baseline: Iterative Closest Point (ICP) scan-to-scan odometry:
 
 ```powershell
-python experiments/02-lidar-odometry-icp/run.py --dataset synthetic --max-frames 20 --voxel-size 0.15
+python experiments/02_analyze_lidar_odometry.py --dataset newer_college --path datasets/newer-college/01_short_experiment --max-frames 50 --voxel-size 0.15
 ```
 
 ### What Each Major Parameter Controls:
-- `--dataset synthetic`: Selects the synthetic corridor demonstration stream.
-- `--max-frames 20`: Restricts processing to 20 frames so beginners can observe results in seconds.
+- `--dataset newer_college`: Selects the Newer College dataset sequence.
+- `--max-frames 50`: Restricts processing to 50 frames for fast initial evaluation.
 - `--voxel-size 0.15`: Groups points into $15\text{ cm}$ cubic cells and computes cell centroids. This reduces input points by ~70–90%, dramatically speeding up computation while preserving wall geometry.
 - `--max-distance 1.5`: Rejects point correspondences farther than $1.5\text{ meters}$, filtering out transient outliers.
 - `--max-iterations 30`: Limits alignment iterations per scan to prevent infinite loops.

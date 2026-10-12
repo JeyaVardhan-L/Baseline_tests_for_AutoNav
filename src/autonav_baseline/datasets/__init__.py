@@ -13,7 +13,6 @@ from autonav_baseline.datasets.openloris import OpenLORISAdapter
 from autonav_baseline.datasets.tum_rgbd import TUMRGBDAdapter
 from autonav_baseline.datasets.oxford_spires import OxfordSpiresAdapter
 from autonav_baseline.datasets.kitti import KITTIAdapter
-from autonav_baseline.datasets.synthetic import SyntheticAdapter
 
 __all__ = [
     "SensorType",
@@ -30,5 +29,4 @@ __all__ = [
     "TUMRGBDAdapter",
     "OxfordSpiresAdapter",
     "KITTIAdapter",
-    "SyntheticAdapter",
 ]
