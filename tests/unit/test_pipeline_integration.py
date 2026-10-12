@@ -94,7 +94,8 @@ class TestPipelineIntegration(unittest.TestCase):
             # Check summary statistics
             summary = odometry.get_summary_statistics()
             self.assertEqual(summary["total_frames_processed"], 5)
-            self.assertEqual(summary["successful_registrations"], 5)
+            self.assertEqual(summary["registration_attempts"], 4)
+            self.assertEqual(summary["successful_registrations"], 4)
             self.assertEqual(summary["failed_registrations"], 0)
             self.assertEqual(summary["success_rate_percent"], 100.0)
 
