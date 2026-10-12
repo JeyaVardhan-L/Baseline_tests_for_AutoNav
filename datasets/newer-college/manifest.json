@@ -1,0 +1,56 @@
+{
+  "dataset_name": "The Newer College Dataset",
+  "citation": "Ramezani, M., Wang, Y., Camurri, M., Wisth, D., Mattamala, M., & Fallon, M. (2020). The Newer College Dataset: Handheld LiDAR, Inertial and Vision with Ground Truth. IROS 2020.",
+  "official_website": "https://ori-drs.github.io/newer-college-dataset/",
+  "official_download_page": "https://ori-drs.github.io/newer-college-dataset/download/",
+  "access_protocol": "Google Form registration (email-gated download links)",
+  "access_form_url": "https://docs.google.com/forms/d/e/1FAIpQLSeHig8tTLDkj02ubvW8vi_lseKRCztxdHYNQBHNhTS_lOOlkg/viewform?embedded=true",
+  "license": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
+  "cost": "$0 (Free for academic and non-commercial research)",
+  "selected_sequence": {
+    "sequence_id": "01_short_experiment",
+    "description": "Short walk through the New College Quad (approx 160 meters, 160 seconds)",
+    "archive_name": "01_short_experiment.bag",
+    "archive_size_bytes_approx": 1610612736,
+    "archive_size_readable": "~1.5 GB compressed (~4.5 GB uncompressed)"
+  },
+  "declared_sensors": {
+    "lidar": {
+      "model": "Ouster OS1-64 (Gen 1)",
+      "beams": 64,
+      "horizontal_resolution": 1024,
+      "nominal_frequency_hz": 10.0,
+      "field_of_view_deg": {
+        "horizontal": 360.0,
+        "vertical": 33.2
+      },
+      "nominal_points_per_frame": 65536
+    },
+    "imu": {
+      "model": "Ouster internal IMU",
+      "nominal_frequency_hz": 100.0,
+      "dof": 6
+    },
+    "ground_truth": {
+      "source": "Leica BLK360 terrestrial laser scanner reference trajectory",
+      "frequency_hz_approx": 10.0,
+      "format": "SE(3) poses (tx, ty, tz, qx, qy, qz, qw)"
+    }
+  },
+  "expected_directory_structure": {
+    "root": "datasets/newer-college/01_short_experiment",
+    "point_clouds_directory": "point_clouds",
+    "supported_point_cloud_formats": [".pcd", ".bin", ".ply", ".npy"],
+    "timestamps_file": "timestamps.csv",
+    "ground_truth_file": "ground_truth.csv"
+  },
+  "evidence_labels": {
+    "sensor_model": "DECLARED",
+    "nominal_frequencies": "DECLARED",
+    "nominal_resolution": "DECLARED",
+    "observed_frequency": "MEASURED (only when timestamps.csv is loaded)",
+    "point_count_per_frame": "MEASURED",
+    "latency": "MEASURED",
+    "trajectory_accuracy": "MEASURED (requires valid ground_truth.csv alignment)"
+  }
+}
