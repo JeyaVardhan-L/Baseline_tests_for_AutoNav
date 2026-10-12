@@ -15,6 +15,7 @@ def parse_pcd_file(fpath: Path) -> Tuple[np.ndarray, Optional[np.ndarray], Dict[
     Parses an uncompressed ASCII or binary Point Cloud Data (.pcd) file.
     Does NOT fabricate points. Returns actual 3D points and optional intensity.
     """
+    header_byte_offset = 0
     with open(fpath, "rb") as f:
         header_lines = []
         while True:
@@ -24,6 +25,7 @@ def parse_pcd_file(fpath: Path) -> Tuple[np.ndarray, Optional[np.ndarray], Dict[
             line_str = line.decode("ascii", errors="replace").strip()
             header_lines.append(line_str)
             if line_str.startswith("DATA"):
+                header_byte_offset = f.tell()
                 break
 
     header_meta: Dict[str, str] = {}
@@ -82,9 +84,8 @@ def parse_pcd_file(fpath: Path) -> Tuple[np.ndarray, Optional[np.ndarray], Dict[
             dtype_fields.append((fld, np_type))
 
         pcd_dtype = np.dtype(dtype_fields)
-        header_byte_len = sum(len(h.encode("ascii")) + 1 for h in header_lines)
         with open(fpath, "rb") as f_bin:
-            f_bin.seek(header_byte_len)
+            f_bin.seek(header_byte_offset)
             raw_bytes = f_bin.read()
 
         record_size = pcd_dtype.itemsize
@@ -107,6 +108,7 @@ def parse_ply_file(fpath: Path) -> Tuple[np.ndarray, Optional[np.ndarray], Dict[
     """
     Parses a Stanford Polygon (.ply) point cloud file (ASCII or binary little endian).
     """
+    header_byte_offset = 0
     with open(fpath, "rb") as f:
         header_lines = []
         while True:
@@ -116,6 +118,7 @@ def parse_ply_file(fpath: Path) -> Tuple[np.ndarray, Optional[np.ndarray], Dict[
             line_str = line.decode("ascii", errors="replace").strip()
             header_lines.append(line_str)
             if line_str == "end_header":
+                header_byte_offset = f.tell()
                 break
 
     ply_format = ""
@@ -178,9 +181,8 @@ def parse_ply_file(fpath: Path) -> Tuple[np.ndarray, Optional[np.ndarray], Dict[
         dtype_list = [(name, type_dict.get(dtype_str, "f4")) for name, dtype_str in properties]
         ply_dtype = np.dtype(dtype_list)
 
-        header_len = sum(len(h.encode("ascii")) + 1 for h in header_lines)
         with open(fpath, "rb") as f_bin:
-            f_bin.seek(header_len)
+            f_bin.seek(header_byte_offset)
             raw = f_bin.read()
 
         record_sz = ply_dtype.itemsize
@@ -282,13 +284,28 @@ def discover_timestamps(root_path: Optional[Path], files: List[Path]) -> Optiona
                 try:
                     timestamps = []
                     with open(tpath, "r", encoding="utf-8") as f:
-                        for line in f:
-                            line = line.strip()
-                            if not line or line.startswith("#") or line.startswith("timestamp") or line.startswith("time"):
-                                continue
+                        lines = [l.strip() for l in f if l.strip() and not l.startswith("#")]
+                    if lines:
+                        first_line = lines[0]
+                        first_parts = [p.strip().lower() for p in (first_line.split(",") if "," in first_line else first_line.split())]
+                        col_idx = -1
+                        has_header = False
+                        for col_candidate in ["timestamp_sec", "timestamp", "time", "t", "seconds", "sec"]:
+                            if col_candidate in first_parts:
+                                col_idx = first_parts.index(col_candidate)
+                                has_header = True
+                                break
+                        
+                        start_idx = 1 if has_header else 0
+                        read_col = col_idx if col_idx != -1 else 0
+
+                        for line in lines[start_idx:]:
                             parts = line.split(",") if "," in line else line.split()
-                            val = float(parts[-1])
-                            # If nanoseconds (> 1e16) or microseconds (> 1e14), convert to seconds
+                            try:
+                                val = float(parts[read_col])
+                            except (ValueError, IndexError):
+                                continue
+                            # If nanoseconds (> 1e15) or microseconds (> 1e12), convert to seconds
                             if val > 1e15:
                                 val /= 1e9
                             elif val > 1e12:

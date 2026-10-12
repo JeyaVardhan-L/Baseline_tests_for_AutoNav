@@ -163,6 +163,57 @@ class TestDatasetIO(unittest.TestCase):
         self.assertIsNone(frames[0].timestamp)
         self.assertEqual(frames[0].points.shape, (1, 3))
 
+    def test_parse_pcd_binary(self):
+        header = (
+            "# .PCD v0.7\nVERSION 0.7\nFIELDS x y z intensity\nSIZE 4 4 4 4\nTYPE F F F F\n"
+            "COUNT 1 1 1 1\nWIDTH 2\nHEIGHT 1\nPOINTS 2\nDATA binary\n"
+        ).encode("ascii")
+        pts_data = np.array([
+            (1.1, 2.2, 3.3, 10.0),
+            (4.4, 5.5, 6.6, 20.0),
+        ], dtype=[("x", "<f4"), ("y", "<f4"), ("z", "<f4"), ("intensity", "<f4")])
+        fpath = self.dir_path / "binary_scan.pcd"
+        fpath.write_bytes(header + pts_data.tobytes())
+
+        xyz, intensity, meta = parse_pcd_file(fpath)
+        self.assertEqual(xyz.shape, (2, 3))
+        self.assertAlmostEqual(xyz[0, 0], 1.1, places=4)
+        self.assertAlmostEqual(xyz[1, 2], 6.6, places=4)
+        self.assertIsNotNone(intensity)
+        self.assertAlmostEqual(intensity[0], 10.0, places=4)
+
+    def test_parse_ply_binary(self):
+        header = (
+            "ply\nformat binary_little_endian 1.0\nelement vertex 2\n"
+            "property float x\nproperty float y\nproperty float z\nend_header\n"
+        ).encode("ascii")
+        pts_data = np.array([
+            (10.0, 20.0, 30.0),
+            (40.0, 50.0, 60.0),
+        ], dtype=[("x", "<f4"), ("y", "<f4"), ("z", "<f4")])
+        fpath = self.dir_path / "binary_scan.ply"
+        fpath.write_bytes(header + pts_data.tobytes())
+
+        xyz, intensity, meta = parse_ply_file(fpath)
+        self.assertEqual(xyz.shape, (2, 3))
+        self.assertAlmostEqual(xyz[0, 1], 20.0, places=4)
+        self.assertAlmostEqual(xyz[1, 0], 40.0, places=4)
+
+    def test_discover_timestamps_csv_with_header(self):
+        scan1 = self.dir_path / "scan_1.bin"
+        scan2 = self.dir_path / "scan_2.bin"
+        scan1.write_bytes(b"\x00" * 16)
+        scan2.write_bytes(b"\x00" * 16)
+
+        csv_content = "frame_id,timestamp_sec,quality\n0,1650000000.0,100\n1,1650000000.1,100\n"
+        (self.dir_path / "timestamps.csv").write_text(csv_content, encoding="utf-8")
+
+        ts = discover_timestamps(self.dir_path, [scan1, scan2])
+        self.assertIsNotNone(ts)
+        self.assertEqual(len(ts), 2)
+        self.assertAlmostEqual(ts[0], 1650000000.0, places=3)
+        self.assertAlmostEqual(ts[1], 1650000000.1, places=3)
+
 
 if __name__ == "__main__":
     unittest.main()
