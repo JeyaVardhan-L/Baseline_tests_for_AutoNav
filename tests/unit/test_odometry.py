@@ -96,7 +96,8 @@ class TestICPOdometry(unittest.TestCase):
 
         summary = odom.get_summary_statistics()
         self.assertEqual(summary["total_frames_processed"], 3)
-        self.assertEqual(summary["successful_registrations"], 3)
+        self.assertEqual(summary["registration_attempts"], 2)
+        self.assertEqual(summary["successful_registrations"], 2)
         self.assertGreater(summary["total_path_length_m"], 0.3)
         self.assertGreater(summary["latency_mean_ms"], 0.0)
 

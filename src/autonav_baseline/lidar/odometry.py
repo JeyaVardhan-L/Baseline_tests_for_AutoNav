@@ -291,7 +291,6 @@ class ICPOdometry:
                 status="INITIAL_FRAME",
             )
             self.step_history.append(res)
-            self.successful_steps += 1
             return res
 
         # Register current frame (source) against previous frame (target)
@@ -353,6 +352,12 @@ class ICPOdometry:
         """Calculates aggregate odometry metrics."""
         latencies = [s.registration_latency_ms for s in self.step_history]
         total_frames = len(self.step_history)
+        reg_attempts = max(0, total_frames - 1)
+        success_rate = (
+            round((self.successful_steps / reg_attempts) * 100.0, 1)
+            if reg_attempts > 0
+            else 100.0
+        )
         path_length = self.get_total_path_length_m()
 
         lat_mean = float(np.mean(latencies)) if latencies else 0.0
@@ -361,9 +366,10 @@ class ICPOdometry:
 
         return {
             "total_frames_processed": total_frames,
+            "registration_attempts": reg_attempts,
             "successful_registrations": self.successful_steps,
             "failed_registrations": self.failed_steps,
-            "success_rate_percent": round((self.successful_steps / max(total_frames, 1)) * 100.0, 1),
+            "success_rate_percent": success_rate,
             "total_path_length_m": round(path_length, 3),
             "final_position_xyz": [round(c, 3) for c in (self.current_pose[:3, 3].tolist())],
             "latency_mean_ms": round(lat_mean, 2),
