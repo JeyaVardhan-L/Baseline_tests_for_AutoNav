@@ -1,33 +1,28 @@
 # ============================================================
-# IRoC-U Autonomous Navigation — .gitignore
+# AutoNav Research Baseline — .gitignore
 # ============================================================
 
-# ---- Datasets (NEVER commit raw sensor data) ----
-datasets/raw/
-datasets/downloaded/
-datasets/**/*.bin
+# ---- Datasets (NEVER commit raw or downloaded sensor data) ----
+datasets/**/raw/
+datasets/**/downloaded/
 datasets/**/*.bag
-datasets/**/*.mcap
-datasets/**/*.db3
+datasets/**/*.bin
 datasets/**/*.pcd
 datasets/**/*.ply
-datasets/**/*.las
-datasets/**/*.laz
+datasets/**/*.mcap
+datasets/**/*.db3
 datasets/**/*.zip
 datasets/**/*.tar.gz
 datasets/**/*.tar
 datasets/**/*.7z
-datasets/**/*.png
-datasets/**/*.jpg
-datasets/**/*.jpeg
+datasets/**/*.clf
 
+# ---- Output Results (Keep directory structure, avoid committing machine runs) ----
+results/*
+!results/README.md
+!results/.gitkeep
 
-# ---- Experiment raw data ----
-experiments/**/raw/
-experiments/**/processed/*.bin
-experiments/**/processed/*.npy
-
-# ---- Python ----
+# ---- Python & Bytecode ----
 __pycache__/
 *.py[cod]
 *$py.class
@@ -38,6 +33,11 @@ build/
 *.whl
 .eggs/
 *.so
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.mypy_cache/
 
 # ---- Virtual environments ----
 venv/
@@ -54,27 +54,16 @@ env/
 *.swp
 *.swo
 *~
-.project
-.settings/
-.classpath
+*.bak
 
-# ---- OS ----
+# ---- OS Artifacts ----
 Thumbs.db
 ehthumbs.db
 Desktop.ini
 .DS_Store
-.DS_Store?
-._*
 
-# ---- Large outputs (keep figures, exclude heavy data) ----
-*.pickle
-*.pkl
-
-# ---- Logs (keep structure, exclude large log files) ----
-logs/*.log
-logs/**/*.log
-
-# ---- Temporary ----
+# ---- Temporary & Scratch ----
 tmp/
 temp/
 scratch/
+nothing
