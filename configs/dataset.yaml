@@ -1,0 +1,30 @@
+# AutoNav Research Baseline — Dataset Configuration
+# Primary Target: Oxford Newer College Dataset (01_short_experiment)
+
+dataset:
+  name: "newer_college"
+  sequence: "01_short_experiment"
+  root_path: "datasets/newer-college/01_short_experiment"
+  point_clouds_dir: "datasets/newer-college/01_short_experiment/point_clouds"
+  timestamps_file: "datasets/newer-college/01_short_experiment/timestamps.csv"
+  ground_truth_file: "datasets/newer-college/01_short_experiment/ground_truth.csv"
+
+sensor:
+  lidar:
+    model: "Ouster OS1-64 (Gen 1)"
+    nominal_rate_hz: 10.0
+    nominal_channels: 64
+    nominal_points_per_frame: 65536
+    fov_horizontal_deg: 360.0
+    fov_vertical_deg: 33.2
+  imu:
+    model: "Ouster internal IMU"
+    nominal_rate_hz: 100.0
+
+odometry:
+  algorithm: "point_to_point_icp"
+  voxel_size_m: 0.15
+  max_correspondence_distance_m: 1.5
+  max_iterations: 30
+  convergence_tolerance: 1e-6
+  min_points_threshold: 50
