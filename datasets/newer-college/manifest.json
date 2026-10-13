@@ -7,12 +7,18 @@
   "access_form_url": "https://docs.google.com/forms/d/e/1FAIpQLSeHig8tTLDkj02ubvW8vi_lseKRCztxdHYNQBHNhTS_lOOlkg/viewform?embedded=true",
   "license": "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)",
   "cost": "$0 (Free for academic and non-commercial research)",
-  "selected_sequence": {
     "sequence_id": "01_short_experiment",
-    "description": "Short walk through the New College Quad (approx 160 meters, 160 seconds)",
-    "archive_name": "01_short_experiment.bag",
-    "archive_size_bytes_approx": 1610612736,
-    "archive_size_readable": "~1.5 GB compressed (~4.5 GB uncompressed)"
+    "official_description": "0.5 loop of the quad, loop of the mid-section, loop of parkland, loop of quad, loop of park",
+    "duration_seconds": 1530,
+    "duration_readable": "1,530 seconds (~25.5 minutes)",
+    "nominal_lidar_frames_count": 15300,
+    "published_formats": [
+      "rosbag (.bag) containing all topics",
+      "raw files (.pcd point clouds, .png images, .csv timestamps/IMU)"
+    ],
+    "full_sequence_size_note": "Tens of gigabytes uncompressed (~25-50+ GB across all sensor streams; multi-gigabyte compressed). Labeled 'short' by authors only relative to the 2,180-second long experiment.",
+    "recommended_research_subset": "First 50 to 100 consecutive frames (5 to 10 seconds of motion, ~100-250 MB) for laptop-scale ICP odometry feasibility testing",
+    "local_dataset_status": "PENDING_ACQUISITION (Directory datasets/newer-college/01_short_experiment is currently empty; real-data validation is pending download)"
   },
   "declared_sensors": {
     "lidar": {

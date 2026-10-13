@@ -14,11 +14,20 @@ The Newer College Dataset is selected as the primary real-world benchmark datase
 1. **Authentic 3D Multi-Beam LiDAR:** Recorded with an Ouster OS1-64 (64 channels, 10 Hz, 360° FOV, ~65,536 points/frame), representative of modern high-resolution robotic sensing.
 2. **Sub-Centimeter Ground-Truth Trajectory:** Unlike datasets that rely on loose GNSS or unverified odometry, Newer College provides 6-DOF ground-truth poses registered against an optical millimeter-level Leica BLK360 terrestrial laser scan.
 3. **Synchronized Multi-Modal Sensors:** Includes aligned LiDAR point clouds, 6-axis IMU readings (100 Hz), and stereo imagery.
-4. **Appropriate Scale for Laptop Research:** The shortest recording, `01_short_experiment` (~160 meters, ~160 seconds), is compact enough (~1.5 GB compressed) to process on a standard laptop without enterprise server hardware.
+4. **Research Scope & Sequence Details:**
+   - **Sequence:** `01_short_experiment`
+   - **Official Description:** 0.5 loop of the quad, loop of the mid-section, loop of parkland, loop of quad, loop of park.
+   - **Duration:** 1,530 seconds (~25.5 minutes), generating ~15,300 LiDAR scans at 10 Hz.
+   - **Size Qualification:** The full multi-sensor sequence is tens of gigabytes (~25–50+ GB uncompressed; multi-gigabyte compressed). It is named "short experiment" by the authors only in comparison to the 2,180-second `long experiment`.
+   - **Recommended Laptop Subset:** For initial laptop-scale ICP odometry feasibility testing, extracting an initial slice of **50 to 100 consecutive frames** (5 to 10 seconds of motion, ~100–250 MB) is strongly recommended over processing the entire 25.5-minute trajectory.
 
 ---
 
-## 2. Official Acquisition Procedure
+## 2. Official Acquisition Procedure & Current Local Status
+
+> [!IMPORTANT]
+> **Current Local Status:** The raw Newer College dataset is **currently absent from this local repository**.
+> Real-data validation is **pending manual dataset acquisition**. All current pipeline validation is based on verified mathematical test fixtures and honest handling of unpopulated directories.
 
 The official Oxford distribution uses an email registration form to distribute download links:
 
@@ -26,13 +35,12 @@ The official Oxford distribution uses an email registration form to distribute d
    ```text
    https://ori-drs.github.io/newer-college-dataset/download/
    ```
-2. In the embedded Google Form, submit your email address.
-3. Oxford will display or email the direct link to the dataset repository.
-4. Select the sequence:
-   ```text
-   01_short_experiment.bag   (approx 1.5 GB compressed)
-   ```
-   Or download the pre-extracted point clouds if available.
+2. In the embedded Google Form, submit your email address (or email `newercollegedataset@robots.ox.ac.uk` if the form fails).
+3. Oxford provides the link to the dataset repository.
+4. Available formats from Oxford:
+   - **ROS bag (`.bag`):** Contains `/os1_cloud_node/points` (10 Hz), IMU topics, and stereo imagery.
+   - **Raw files:** Pre-extracted `.pcd` point clouds numbered by timestamp, `.png` stereo images, and `.csv` metadata.
+5. Download sequence `01_short_experiment` (or download raw PCDs / extract the first 50–100 consecutive PCD files).
 
 ---
 

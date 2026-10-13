@@ -104,7 +104,7 @@ class NewerCollegeAdapter(DatasetAdapter):
                 missing_frames_count=None,
                 malformed_files_count=None,
                 metadata={
-                    "status": "Directory does not exist. Please download data per docs/01-datasets/newer-college.md",
+                    "status": "Directory does not exist or contains no files. Please acquire data per datasets/newer-college/README.md",
                     "supported_formats": self.SUPPORTED_LIDAR_EXTENSIONS,
                 },
             )
@@ -184,7 +184,7 @@ class NewerCollegeAdapter(DatasetAdapter):
         if not self.root_path or not self.root_path.exists():
             raise FileNotFoundError(
                 f"Newer College data directory not found: {self.root_path}\n"
-                "Please download the dataset per instructions in docs/01-datasets/newer-college.md"
+                "Please acquire the dataset per instructions in datasets/newer-college/README.md"
             )
 
         lidar_files = self._find_lidar_files()

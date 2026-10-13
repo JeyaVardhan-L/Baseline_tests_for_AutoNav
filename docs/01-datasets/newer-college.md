@@ -45,12 +45,19 @@ Available as ROS 1 `.bag` files (convertible to ROS 2 via `rosbags`):
 
 ---
 
-## 5. Recommended Small Sequence for First Experiments
+## 5. Sequence Selection, Formats, and Recommended Initial Subset
 
-Do **NOT** download the full 100 GB multi-round sequence immediately.
-
-- **Recommended Sequence**: `01_short_experiment` (~1.5 GB to 4.5 GB)
-- **Official Download Link**: Available on the [Newer College Downloads Page](https://ori-drs.github.io/newer-college-dataset/download/).
+- **Target Sequence**: `01_short_experiment`
+  - **Official Description**: 0.5 loop of quad, loop of mid-section, loop of parkland, loop of quad, loop of park.
+  - **Duration**: 1,530 seconds (~25.5 minutes), generating ~15,300 LiDAR scans at 10 Hz.
+  - **Published Formats**: ROS bag (`.bag`) and raw files (`.pcd` point clouds, `.png` stereo images, `.csv` timestamps/IMU).
+  - **Full Sequence Size**: Tens of gigabytes (~25–50+ GB uncompressed across all streams; multi-gigabyte compressed). Note that "short" is the authors' relative designation compared to the 2,180-second `long experiment`.
+- **Recommended Laptop Subset**:
+  - Do **NOT** process all 15,300 frames on a standard laptop for initial baseline testing.
+  - Extract an initial slice of **50 to 100 consecutive frames** (5 to 10 seconds of motion, ~100–250 MB) into `datasets/newer-college/01_short_experiment/point_clouds/`.
+- **Official Download Portal**: [Newer College Downloads Page](https://ori-drs.github.io/newer-college-dataset/download/) (registration via Google Form).
+- **License**: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0).
+- **Current Local Status**: The raw Newer College dataset is **currently absent locally**; real-data validation is pending dataset acquisition.
 - **Where to Extract**: `datasets/newer-college/01_short_experiment/`
 
 ---

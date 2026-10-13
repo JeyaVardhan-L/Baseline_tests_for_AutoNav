@@ -18,11 +18,13 @@ This registry evaluates candidate public datasets against the requirements of th
 | **Download Portal** | [https://ori-drs.github.io/newer-college-dataset/download/](https://ori-drs.github.io/newer-college-dataset/download/) |
 | **License** | Creative Commons Attribution-NonCommercial-ShareAlike 4.0 (CC BY-NC-SA 4.0) |
 | **Access Method** | Official Google Form email registration (free for non-commercial research) |
-| **Selected Sequence** | `01_short_experiment` (~160m quad loop, ~160s duration) |
+| **Selected Sequence** | `01_short_experiment` (1,530 seconds / ~25.5 minutes, ~15,300 LiDAR scans at 10 Hz) |
 | **Primary LiDAR** | Ouster OS1-64 (Gen 1): 64 channels, 10 Hz nominal, 1024 horiz resolution, ~65,536 pts/frame |
 | **IMU** | Internal Ouster 6-axis IMU (100 Hz nominal) |
 | **Ground Truth** | Leica BLK360 terrestrial laser scanner millimeter reference trajectory |
-| **Download Size** | ~1.5 GB compressed (~4.5 GB uncompressed) |
+| **Published Size & Formats** | Published as ROS bag and raw files (`.pcd`, `.png`, `.csv`). Full multi-sensor sequence is tens of gigabytes (~25–50+ GB uncompressed). |
+| **Recommended Subset** | Initial slice of 50 to 100 consecutive frames (5 to 10 seconds, ~100–250 MB) for laptop-scale baseline ICP testing |
+| **Local Status** | **ABSENT** — Directory is currently empty; real-data validation is pending download. |
 | **Selection Rationale** | Handheld multi-axis motion matches UAV flight dynamics far better than automotive datasets. Provides survey-grade millimeter ground truth for trajectory validation. |
 
 ---

@@ -22,6 +22,12 @@ experiments/
    - `[UNAVAILABLE]`: Data or ground truth not available.
    - `[UNVERIFIED]`: Algorithm or metric not validated against ground truth.
 3. **Reproducibility:** Experiments export structured CSV, JSON, Markdown, and PNG figures to `results/<dataset>/<experiment>/`.
+4. **Current Local Status:** The raw Newer College dataset is **currently absent locally**; real-data validation is **pending manual acquisition**. When run on empty directories, scripts report honestly without fabricating data.
+
+---
+
+> [!NOTE]
+> **Dataset Scale:** The full `01_short_experiment` is **1,530 seconds long (~15,300 LiDAR scans)** and tens of gigabytes uncompressed. The parameter `--max-frames 50` selects an initial 5-second slice (50 frames) suitable for rapid laptop evaluation.
 
 ---
 
@@ -81,3 +87,13 @@ python experiments/02_analyze_lidar_odometry.py --dataset newer_college --path d
 - `figures/trajectory_topdown.png`: Top-down X-Y plane estimated trajectory with start/end markers.
 - `figures/registration_latency.png`: Per-frame registration latency plotted against the 100ms sensor deadline.
 - `figures/point_decimation.png`: Raw vs downsampled point counts illustrating compute decimation.
+
+---
+
+## Teammate Contribution: 2D LiDAR SLAM Benchmark
+
+Located in [`experiments/lidar-pi-slam-benchmark/`](lidar-pi-slam-benchmark/):
+- **Author:** Priyangshu Ghosh (`@PriyangshuGhosh`).
+- **Dataset:** `data/lidar-pi-slam-benchmark/intel.clf` (tracked in Git, 40,557 lines).
+- **Scope:** 2D planar LiDAR SLAM on Intel Research Lab logs; evaluated with 162 unit tests. Documented in its own dedicated README.
+
