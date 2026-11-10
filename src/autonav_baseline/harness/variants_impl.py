@@ -3,7 +3,7 @@ Implementations of the `optimized` and `p2plane` variants (selected through harn
 
 optimized  Same algorithm as baseline (same filters, same point-to-point ICP, same convergence rule, same
            validity gate). Implementation speedups only: packed-key voxel filter, one-pass validity+range
-           mask, cached KD-tree built with cheaper settings, KD-tree queries spread over the CPUs the
+           mask, cached KD-tree (default settings; see DEC-019), KD-tree queries spread over the CPUs the
            process may use. Accuracy must match baseline within tolerance (checked in tests and in the
            published comparison).
 
@@ -54,7 +54,7 @@ class OptimizedOdometry(ICPOdometry):
 
     def _register(self, pts) -> ICPResult:
         if self._tree_for is not self.previous_points:
-            self._tree = cKDTree(self.previous_points, balanced_tree=False, compact_nodes=False)
+            self._tree = cKDTree(self.previous_points)  # default (balanced) tree: see DEC-019
             self._tree_for = self.previous_points
         return icp_point_to_point(
             pts, self.previous_points, self.max_correspondence_distance, self.max_iterations, self.tolerance,

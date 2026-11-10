@@ -194,3 +194,13 @@ All significant design and engineering decisions are recorded here with context,
 | **Date** | 2026-11-10 |
 | **Status** | ACCEPTED |
 | **Decision** | `autonav lab` runs a stdlib `http.server` on 127.0.0.1. It validates inputs against allow-lists, passes arguments as a list (no shell), runs one job at a time (concurrent runs would corrupt timings) and contains no algorithm logic: it spawns the same `autonav run` CLI and serves artifacts. |
+
+## DEC-019 — `optimized` v1 was slower per query; v2 uses the default k-d tree
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-11-10 |
+| **Status** | ACCEPTED |
+| **Finding** | The first `optimized` measurements (commit 5539c47) showed no gain on one core (723 ms vs 671 ms baseline median). Profiling one real frame pair (single thread, 32k points): voxel filter 128 ms -> 13 ms, but a `balanced_tree=False, compact_nodes=False` tree queried 63 ms vs 47 ms for the default tree. Over ~10 ICP iterations that cancels the voxel gain. |
+| **Decision** | v2 uses the default tree. The v1 runs stay on disk, are labelled `phase5`, and are not published; published `optimized` runs are the v2 re-measurements. |
+| **Lesson** | Implementation tuning must be measured per stage; a cheaper build is not a cheaper pipeline. |

@@ -28,6 +28,23 @@ Full suite after Phase 0: `python -B -m unittest discover -s tests` -> Ran 63 te
 | `tools/extract_bag.py` + validation report | Open |
 | Oxford Spires window | Open |
 
-## Open
+## Phase 2: harness and profiles
 
-See later phases in the execution brief; nothing below Phase 1 has been started.
+`autonav run` writes complete run folders. Verified: synthetic smoke runs on laptop-full, laptop-1c (affinity {0}), laptop-4c (affinity {0,2,4,6}, OMP/OPENBLAS threads 4); `run.json` records the worker's effective environment. Suite: 74 tests OK (`python -B -m unittest discover -s tests`).
+
+## Phase 3: first real results (baseline, Newer College bag window, frames 0-269, 3 repeats each)
+
+| Profile | Run id | P50 | P95 | P99 | Max | Violations |
+|---|---|---|---|---|---|---|
+| laptop-full | 20261110T080635Z_..._laptop-full_0862f4f | 749.9 ms | 1547.6 ms | 2111.6 ms | 2684.2 ms | 798/798 |
+| laptop-4c | 20261110T081752Z_..._laptop-4c_0862f4f | 676.2 ms | 1309.6 ms | 1816.2 ms | 2328.2 ms | 798/798 |
+| laptop-1c | 20261110T082758Z_..._laptop-1c_0862f4f | 671.5 ms | 1367.2 ms | 1864.3 ms | 2318.7 ms | 798/798 |
+
+Accuracy (laptop-full, deterministic across repeats): 269/269 registrations accepted; ATE RMSE 0.507 m over 22.5 m ground-truth path (estimated path 26.3 m); position RPE 10 m windows 0.79 m (7.8 %). Single-frame preprocessing study on the NON-CONSECUTIVE sample: median 142.7 ms, P95 186.5 ms, 539/591 frames over 100 ms.
+Commands: `autonav run --dataset newer_college_bag9 --variant baseline --profile <p> --repeats 3`; `autonav run --dataset newer_college_sparse --mode single-frame --profile laptop-full --repeats 3`.
+
+## Phase 5: variants and Spires
+Window fetched with `python tools/fetch_spires.py` (300 frames, 45.6 m path; GT irregular, 281 of 300 frames have a pose within 20 ms). Variant tests: optimized == baseline trajectory (<1e-3), p2plane recovers a known rigid motion. Timing queue (optimized x 3 profiles, p2plane, Spires baseline x 3 profiles, Spires optimized/p2plane): in progress.
+
+## Open
+Phase 6 workflows are written and YAML-validated but have not run (they need a push). Phase 7 site build and Phase 8 review are pending.
