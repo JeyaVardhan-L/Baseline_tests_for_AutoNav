@@ -1,6 +1,6 @@
 # Plan: history rewrite before pushing (NOT executed)
 
-Status: planned only. Nothing in this plan has been run. Executing it needs the owner's explicit go-ahead, because it ends in a force-push to the default branch.
+Status: **option A chosen by the owner (keep history, plain push)**. Option B was prepared and verified in a throwaway clone but never pushed; see DEC-023.
 
 ## What is actually exposed (measured with `git log -S` / `git grep`)
 

@@ -233,3 +233,12 @@ All significant design and engineering decisions are recorded here with context,
 | **Scaling statements** | `compare_profiles` now claims a difference only when per-repeat median ranges do not overlap, notes that profiles were measured at different times on a shared machine, and tags the Raspberry Pi inference `[ASSUMED]`. |
 | **Private-data scan** | The exporter and `check-numbers.mjs` now match JSON-escaped and forward-slash user paths, `/home/` paths, e-mail addresses, Drive links, Drive-id-like tokens and the OS user name. |
 | **Not changed** | Git history of the original repository (before this branch) contains a local Windows user-profile path in an old README (commit 337d95a, removed on this branch) and upstream contributor e-mail addresses. Rewriting history needs your decision before any push. Several published runs come from dirty trees or different commits (disclosed on the site and in the report). `check-numbers` reads git-ignored `artifacts/`, so it runs locally, not in CI; prose numbers outside `<Num>` are not machine-checked. Throughput is exact only for windows starting at frame 0 (all published runs). |
+
+## DEC-023 — Keep history; plain push to master; Pages deploy
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-11-10 |
+| **Status** | DECIDED by the owner: "Plain push, keep history" |
+| **What was done** | The branch was pushed to `master` as a fast-forward (no force). Git history was not rewritten, so one old README line with a Windows user-profile path remains in public history (commit 337d95a); the tip no longer contains it. A targeted rewrite (option B) was prepared and verified in a throwaway clone (0 commits with the path, all 62 commits and authors kept, 75 tests pass) but was not pushed. A verified `git bundle` of the previous history is kept outside the repository. |
+| **Deploy** | `.github/workflows/pages.yml` builds `site/` (showcase mode, `SITE_BASE=/Baseline_tests_for_AutoNav/`) and deploys to GitHub Pages. Enabling Pages may need Settings -> Pages -> Source: GitHub Actions. |

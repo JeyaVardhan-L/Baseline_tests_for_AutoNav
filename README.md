@@ -4,6 +4,8 @@ A reproducible study measuring whether scan-to-scan LiDAR odometry can meet a 10
 
 It is a measurement study, not a navigation system. Every result is labelled with the hardware it ran on.
 
+**Results site (static, read-only):** https://jeyavardhan-l.github.io/Baseline_tests_for_AutoNav/ . The final audit is in [docs/final-report.md](docs/final-report.md).
+
 Origin: an autonomous-navigation feasibility investigation for the ISRO IRoC-U challenge. License: MIT (code). Datasets keep their own licences (see below).
 
 ## The question
