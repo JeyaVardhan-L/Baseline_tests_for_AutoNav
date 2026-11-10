@@ -4,7 +4,7 @@ const fill = (el: HTMLSelectElement, items: string[]) => (el.innerHTML = items.m
 
 (async () => {
   const cfg = await get('/api/config');
-  fill($('f-dataset'), Object.keys(cfg.datasets)); fill($('f-variant'), cfg.variants.filter((v: string) => true)); fill($('f-profile'), Object.keys(cfg.profiles));
+  fill($('f-dataset'), Object.keys(cfg.datasets)); fill($('f-variant'), cfg.variants); fill($('f-profile'), Object.keys(cfg.profiles));
   const claim = () => { $('f-claim').textContent = cfg.profiles[($('f-profile') as HTMLSelectElement).value]; };
   $('f-profile').addEventListener('change', claim); claim();
 

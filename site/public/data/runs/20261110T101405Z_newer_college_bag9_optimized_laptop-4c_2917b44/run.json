@@ -1,0 +1,115 @@
+{
+  "run_id": "20261110T101405Z_newer_college_bag9_optimized_laptop-4c_2917b44",
+  "label": "phase5-v2",
+  "status": "completed",
+  "command": "autonav run --dataset newer_college_bag9 --variant optimized --profile laptop-4c --repeats 3 --label phase5-v2",
+  "started_utc": "2026-11-10T10:14:05.894878+00:00",
+  "ended_utc": "2026-11-10T10:24:30.279854+00:00",
+  "git": {
+    "commit": "2917b44cceafcd884a1372ff5a2e1b57c9acd7d6",
+    "branch": "refine/autonav-lab",
+    "dirty": false
+  },
+  "mode": "pipeline",
+  "variant": "optimized",
+  "dataset": {
+    "id": "newer_college_bag9",
+    "sensor": "Ouster OS1-64 Gen1 (64 beams, 1024 columns, 10 Hz)",
+    "sequence": "Newer College 2020, 01_short_experiment, bag 9 (last 27 s)",
+    "licence": "CC BY-NC-SA 4.0",
+    "evidence": "REAL",
+    "consecutive": true,
+    "nominal_hz": 10.0,
+    "same_sensor_as_target": true
+  },
+  "window": {
+    "start": 0,
+    "stop": 270,
+    "n_frames": 270,
+    "of_total": 271
+  },
+  "parameters": {
+    "voxel_size": 0.15,
+    "min_range": 0.5,
+    "max_range": 50.0,
+    "max_correspondence_distance": 1.5,
+    "max_iterations": 30,
+    "tolerance": 0.0001
+  },
+  "registration_gate": {
+    "min_inlier_ratio": 0.3,
+    "max_mean_residual_m": 0.25,
+    "max_step_translation_m": 1.0,
+    "max_step_rotation_deg": 20.0
+  },
+  "profile": {
+    "id": "laptop-4c",
+    "claim": "Scaling with core count on the development laptop. One-way inference only: a miss here makes a miss on a Raspberry Pi 5 very likely; a pass says nothing about the Pi.",
+    "threads": 4
+  },
+  "methodology": {
+    "repeats": 3,
+    "warmup_frames_excluded": 3,
+    "initial_frame_excluded": true,
+    "deadline_ms": 100.0,
+    "percentile_method": "linear interpolation",
+    "timing": "time.perf_counter wall clock; total_ms = preprocess + register (frame in memory); e2e_ms adds file load",
+    "gc": "default (not disabled)"
+  },
+  "environment": {
+    "cpu_model": "13th Gen Intel(R) Core(TM) i5-13420H",
+    "cpu_architecture": "AMD64",
+    "cpu_cores_physical": 8,
+    "cpu_cores_logical": 12,
+    "cpu_clock_mhz": {
+      "current": 1453.0,
+      "min": 0.0,
+      "max": 2100.0,
+      "note": "reported by the OS; sustained clock under load is not measured"
+    },
+    "ram_total_gb": 15.63,
+    "os": "Windows 11 (10.0.26200)",
+    "python": "3.14.6",
+    "numpy": "2.5.1",
+    "scipy": "1.18.0",
+    "psutil": "7.2.2",
+    "blas_lapack": {
+      "blas": {
+        "name": "scipy-openblas",
+        "version": "0.3.33.112.0",
+        "openblas configuration": "OpenBLAS 0.3.33.112.0  USE64BITINT DYNAMIC_ARCH NO_AFFINITY Haswell MAX_THREADS=24"
+      },
+      "lapack": {
+        "name": "scipy-openblas",
+        "version": "0.3.33.112.0",
+        "openblas configuration": "OpenBLAS 0.3.33.112.0  USE64BITINT DYNAMIC_ARCH NO_AFFINITY Haswell MAX_THREADS=24"
+      }
+    },
+    "thread_env": {
+      "OMP_NUM_THREADS": "4",
+      "OPENBLAS_NUM_THREADS": "4",
+      "MKL_NUM_THREADS": "4"
+    },
+    "cpu_affinity_effective": [
+      0,
+      2,
+      4,
+      6
+    ],
+    "gpu": "not used (CPU-only pipeline)",
+    "cpu_affinity_requested": [
+      0,
+      2,
+      4,
+      6
+    ]
+  },
+  "hardware_label": "Measured on 13th Gen Intel(R) Core(TM) i5-13420H (laptop-4c); not a Raspberry Pi, not embedded hardware",
+  "evidence_tags": {
+    "latency": "MEASURED",
+    "violation_percent": "DERIVED",
+    "peak_rss": "MEASURED",
+    "ate_rpe": "DERIVED (ground truth)",
+    "dataset": "DECLARED"
+  }
+}

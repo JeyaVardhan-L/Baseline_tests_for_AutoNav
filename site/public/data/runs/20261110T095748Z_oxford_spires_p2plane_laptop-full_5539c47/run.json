@@ -1,0 +1,118 @@
+{
+  "run_id": "20261110T095748Z_oxford_spires_p2plane_laptop-full_5539c47",
+  "label": "phase5",
+  "status": "completed",
+  "command": "autonav run --dataset oxford_spires --variant p2plane --profile laptop-full --repeats 3 --label phase5",
+  "started_utc": "2026-11-10T09:57:48.123733+00:00",
+  "ended_utc": "2026-11-10T10:05:55.065321+00:00",
+  "git": {
+    "commit": "5539c47c8ef08ee0813c9bf0749287b6377ad234",
+    "branch": "refine/autonav-lab",
+    "dirty": true
+  },
+  "mode": "pipeline",
+  "variant": "p2plane",
+  "dataset": {
+    "id": "oxford_spires",
+    "sensor": "Hesai QT64 (64 beams) - DIFFERENT from OS1-64 (beam layout, FOV, range)",
+    "sequence": "Oxford Spires, one window",
+    "licence": "see docs/decision-log.md",
+    "evidence": "REAL",
+    "consecutive": true,
+    "nominal_hz": 10.0,
+    "same_sensor_as_target": false
+  },
+  "window": {
+    "start": 0,
+    "stop": 300,
+    "n_frames": 300,
+    "of_total": 300
+  },
+  "parameters": {
+    "voxel_size": 0.15,
+    "min_range": 0.5,
+    "max_range": 50.0,
+    "max_correspondence_distance": 1.5,
+    "max_iterations": 30,
+    "tolerance": 0.0001
+  },
+  "registration_gate": {
+    "min_inlier_ratio": 0.3,
+    "max_mean_residual_m": 0.25,
+    "max_step_translation_m": 1.0,
+    "max_step_rotation_deg": 20.0
+  },
+  "profile": {
+    "id": "laptop-full",
+    "claim": "Development-laptop performance (no limits).",
+    "threads": null
+  },
+  "methodology": {
+    "repeats": 3,
+    "warmup_frames_excluded": 3,
+    "initial_frame_excluded": true,
+    "deadline_ms": 100.0,
+    "percentile_method": "linear interpolation",
+    "timing": "time.perf_counter wall clock; total_ms = preprocess + register (frame in memory); e2e_ms adds file load",
+    "gc": "default (not disabled)"
+  },
+  "environment": {
+    "cpu_model": "13th Gen Intel(R) Core(TM) i5-13420H",
+    "cpu_architecture": "AMD64",
+    "cpu_cores_physical": 8,
+    "cpu_cores_logical": 12,
+    "cpu_clock_mhz": {
+      "current": 1453.0,
+      "min": 0.0,
+      "max": 2100.0,
+      "note": "reported by the OS; sustained clock under load is not measured"
+    },
+    "ram_total_gb": 15.63,
+    "os": "Windows 11 (10.0.26200)",
+    "python": "3.14.6",
+    "numpy": "2.5.1",
+    "scipy": "1.18.0",
+    "psutil": "7.2.2",
+    "blas_lapack": {
+      "blas": {
+        "name": "scipy-openblas",
+        "version": "0.3.33.112.0",
+        "openblas configuration": "OpenBLAS 0.3.33.112.0  USE64BITINT DYNAMIC_ARCH NO_AFFINITY Haswell MAX_THREADS=24"
+      },
+      "lapack": {
+        "name": "scipy-openblas",
+        "version": "0.3.33.112.0",
+        "openblas configuration": "OpenBLAS 0.3.33.112.0  USE64BITINT DYNAMIC_ARCH NO_AFFINITY Haswell MAX_THREADS=24"
+      }
+    },
+    "thread_env": {
+      "OMP_NUM_THREADS": null,
+      "OPENBLAS_NUM_THREADS": null,
+      "MKL_NUM_THREADS": null
+    },
+    "cpu_affinity_effective": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "gpu": "not used (CPU-only pipeline)",
+    "cpu_affinity_requested": null
+  },
+  "hardware_label": "Measured on 13th Gen Intel(R) Core(TM) i5-13420H (laptop-full); not a Raspberry Pi, not embedded hardware",
+  "evidence_tags": {
+    "latency": "MEASURED",
+    "violation_percent": "DERIVED",
+    "peak_rss": "MEASURED",
+    "ate_rpe": "DERIVED (ground truth)",
+    "dataset": "DECLARED"
+  }
+}

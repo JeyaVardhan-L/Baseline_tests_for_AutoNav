@@ -1,0 +1,305 @@
+{
+  "status": "completed",
+  "mode": "pipeline",
+  "evidence": "REAL",
+  "latency_ms": {
+    "load_ms": {
+      "n": 888,
+      "mean": 11.663576126126127,
+      "p50": 7.36445,
+      "p90": 22.92517,
+      "p95": 24.731264999999997,
+      "p99": 28.192199,
+      "max": 46.8762,
+      "min": 4.3513,
+      "std": 7.474595087975153
+    },
+    "preprocess_ms": {
+      "n": 888,
+      "mean": 151.64524594594596,
+      "p50": 153.40800000000002,
+      "p90": 180.65384,
+      "p95": 201.2157,
+      "p99": 236.64965999999998,
+      "max": 332.0107,
+      "min": 108.0307,
+      "std": 28.452972721162983
+    },
+    "register_ms": {
+      "n": 888,
+      "mean": 369.0851118243243,
+      "p50": 363.4282,
+      "p90": 450.77199,
+      "p95": 483.33887500000003,
+      "p99": 587.23345,
+      "max": 2646.2043,
+      "min": 198.2991,
+      "std": 101.53310709393423
+    },
+    "total_ms": {
+      "n": 888,
+      "mean": 520.7303577702703,
+      "p50": 517.58795,
+      "p90": 619.35553,
+      "p95": 657.842765,
+      "p99": 794.00649,
+      "max": 2876.7601,
+      "min": 308.8165,
+      "std": 115.48706786974579
+    },
+    "e2e_ms": {
+      "n": 888,
+      "mean": 532.3939338963964,
+      "p50": 528.5902,
+      "p90": 629.09865,
+      "p95": 668.30455,
+      "p99": 800.531669,
+      "max": 2887.5161,
+      "min": 314.5015,
+      "std": 115.27028471371507
+    }
+  },
+  "deadline": {
+    "deadline_ms": 100.0,
+    "basis": "sensor period at nominal rate",
+    "pipeline_total_ms": {
+      "violations": 888,
+      "of": 888,
+      "violation_percent": 100.0
+    },
+    "end_to_end_ms": {
+      "violations": 888,
+      "of": 888,
+      "violation_percent": 100.0
+    },
+    "note": "A P95 below the deadline still allows up to 5 % of frames to miss it; the violation rate is the deadline statistic."
+  },
+  "throughput_fps": {
+    "min": 1.794040857554608,
+    "median": 1.9184343095877012,
+    "max": 1.9404354214967567
+  },
+  "peak_rss_mb": {
+    "min": 85.609375,
+    "median": 85.75390625,
+    "max": 86.9453125
+  },
+  "per_repeat": [
+    {
+      "rep": 0,
+      "n": 296,
+      "p50": 540.5966000000001,
+      "p95": 644.6262750000001,
+      "p99": 686.1991600000009,
+      "max": 2876.7601,
+      "violations_total": 296,
+      "violation_percent_total": 100.0,
+      "violation_percent_e2e": 100.0,
+      "throughput_fps": 1.794040857554608,
+      "peak_rss_mb": 86.9453125
+    },
+    {
+      "rep": 1,
+      "n": 296,
+      "p50": 496.3612,
+      "p95": 730.539325,
+      "p99": 836.2915850000003,
+      "max": 1106.9483,
+      "violations_total": 296,
+      "violation_percent_total": 100.0,
+      "violation_percent_e2e": 100.0,
+      "throughput_fps": 1.9184343095877012,
+      "peak_rss_mb": 85.75390625
+    },
+    {
+      "rep": 2,
+      "n": 296,
+      "p50": 497.03945,
+      "p95": 602.962775,
+      "p99": 658.4296300000002,
+      "max": 700.5183,
+      "violations_total": 296,
+      "violation_percent_total": 100.0,
+      "violation_percent_e2e": 100.0,
+      "throughput_fps": 1.9404354214967567,
+      "peak_rss_mb": 85.609375
+    }
+  ],
+  "repeat_spread": {
+    "p50": {
+      "min": 496.3612,
+      "median": 497.03945,
+      "max": 540.5966000000001
+    },
+    "p95": {
+      "min": 602.962775,
+      "median": 644.6262750000001,
+      "max": 730.539325
+    },
+    "p99": {
+      "min": 658.4296300000002,
+      "median": 686.1991600000009,
+      "max": 836.2915850000003
+    },
+    "violation_percent_total": {
+      "min": 100.0,
+      "median": 100.0,
+      "max": 100.0
+    }
+  },
+  "registration": {
+    "attempts": 299,
+    "accepted": 299,
+    "rejected": 0,
+    "rejected_by_reason": {},
+    "accepted_percent": 100.0,
+    "icp_iterations": {
+      "n": 299,
+      "mean": 5.648829431438127,
+      "p50": 6.0,
+      "p90": 7.0,
+      "p95": 7.0,
+      "p99": 9.0,
+      "max": 9.0,
+      "min": 4.0,
+      "std": 0.950492022385638
+    },
+    "inlier_ratio": {
+      "n": 299,
+      "mean": 0.9978051505016723,
+      "p50": 0.99794,
+      "p90": 0.99888,
+      "p95": 0.998972,
+      "p99": 0.9992508,
+      "max": 0.99949,
+      "min": 0.99286,
+      "std": 0.0009360360243536065
+    },
+    "residual_m": {
+      "n": 299,
+      "mean": 0.16652046822742475,
+      "p50": 0.16729,
+      "p90": 0.1943,
+      "p95": 0.198639,
+      "p99": 0.21819439999999998,
+      "max": 0.22696,
+      "min": 0.10226,
+      "std": 0.021987334902207528
+    },
+    "path_length_estimated_m": 48.38545
+  },
+  "points_per_frame": {
+    "points_raw": {
+      "n": 300,
+      "mean": 57596.34333333333,
+      "p50": 58241.0,
+      "p90": 58646.8,
+      "p95": 58832.65,
+      "p99": 59045.31,
+      "max": 59180.0,
+      "min": 52792.0,
+      "std": 1427.268551741013
+    },
+    "points_valid": {
+      "n": 300,
+      "mean": 57596.34333333333,
+      "p50": 58241.0,
+      "p90": 58646.8,
+      "p95": 58832.65,
+      "p99": 59045.31,
+      "max": 59180.0,
+      "min": 52792.0,
+      "std": 1427.268551741013
+    },
+    "points_range": {
+      "n": 300,
+      "mean": 51666.753333333334,
+      "p50": 52188.0,
+      "p90": 52749.2,
+      "p95": 52887.2,
+      "p99": 53480.86,
+      "max": 53898.0,
+      "min": 48235.0,
+      "std": 1267.3665080876258
+    },
+    "points_voxel": {
+      "n": 300,
+      "mean": 15937.45,
+      "p50": 16804.0,
+      "p90": 17644.2,
+      "p95": 17740.0,
+      "p99": 17825.31,
+      "max": 17896.0,
+      "min": 11823.0,
+      "std": 1844.6880533484969
+    }
+  },
+  "deterministic_across_repeats": true,
+  "accuracy": {
+    "status": "MEASURED",
+    "evidence": "DERIVED",
+    "n_estimated": 300,
+    "n_ground_truth": 811,
+    "n_associated": 281,
+    "association_max_dt_s": 0.02,
+    "ate_m": {
+      "n": 281,
+      "rmse": 0.15251217145307253,
+      "mean": 0.1321046280419749,
+      "median": 0.12371216460853336,
+      "p95": 0.28938402262642243,
+      "max": 0.4168300997306193
+    },
+    "ate_alignment": "rigid SE(3) Umeyama on positions, no scale",
+    "gt_path_length_m": 45.563618073800534,
+    "final_position_error_after_alignment_m": 0.15346740111930274,
+    "rpe": {
+      "time_1s": {
+        "n": 0
+      },
+      "time_5s": {
+        "n": 0
+      },
+      "distance_5m": {
+        "translation_m": {
+          "n": 247,
+          "rmse": 0.09723005891245075,
+          "mean": 0.09022789509572364,
+          "median": 0.08505271599147496,
+          "p95": 0.15587441306999306,
+          "max": 0.19796680791380747
+        },
+        "rotation_deg": "UNAVAILABLE",
+        "mean_segment_length_m": 5.078423127035684,
+        "translation_percent_of_length": 1.7766911665036935
+      },
+      "distance_10m": {
+        "translation_m": {
+          "n": 214,
+          "rmse": 0.14653193689046565,
+          "mean": 0.13679570586084436,
+          "median": 0.12775289965595482,
+          "p95": 0.24435404167756564,
+          "max": 0.27639687485206
+        },
+        "rotation_deg": "UNAVAILABLE",
+        "mean_segment_length_m": 10.07793525105973,
+        "translation_percent_of_length": 1.3573782967742307
+      }
+    },
+    "rpe_mode": "world_position_after_umeyama_alignment",
+    "assumptions": [
+      "Sensor and ground-truth body frames may differ (extrinsic not calibrated): RPE is world-frame position error after global alignment; rotation RPE UNAVAILABLE"
+    ]
+  },
+  "accuracy_arrays": "see viz/ (trajectory_error.json)",
+  "verdict_inputs": {
+    "p95_total_ms": 657.842765,
+    "p99_total_ms": 794.00649,
+    "violation_percent_total": 100.0,
+    "accepted_percent": 100.0,
+    "ate_rmse_m": 0.15251217145307253,
+    "gt_path_length_m": 45.563618073800534,
+    "deadline_ms": 100.0
+  }
+}

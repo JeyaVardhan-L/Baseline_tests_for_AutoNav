@@ -1,0 +1,59 @@
+[
+  {
+    "dataset": "newer_college_bag9",
+    "variant": "baseline",
+    "label": "phase3",
+    "p50_ms": {
+      "laptop-full": 749.8913,
+      "laptop-4c": 676.2093500000001,
+      "laptop-1c": 671.51435
+    },
+    "violation_percent": {
+      "laptop-full": 100.0,
+      "laptop-4c": 100.0,
+      "laptop-1c": 100.0
+    },
+    "statements": [
+      "Median latency changes by 0.90x from laptop-full to laptop-1c .",
+      "It misses the deadline on 4 laptop cores, so a Raspberry Pi 5 very likely misses it too (one-way inference)."
+    ]
+  },
+  {
+    "dataset": "oxford_spires",
+    "variant": "baseline",
+    "label": "phase5",
+    "p50_ms": {
+      "laptop-full": 522.26365,
+      "laptop-4c": 437.8044,
+      "laptop-1c": 779.4844
+    },
+    "violation_percent": {
+      "laptop-full": 100.0,
+      "laptop-4c": 100.0,
+      "laptop-1c": 100.0
+    },
+    "statements": [
+      "Median latency changes by 1.49x from laptop-full to laptop-1c .",
+      "It misses the deadline on 4 laptop cores, so a Raspberry Pi 5 very likely misses it too (one-way inference)."
+    ]
+  },
+  {
+    "dataset": "newer_college_bag9",
+    "variant": "optimized",
+    "label": "phase5-v2",
+    "p50_ms": {
+      "laptop-full": 323.54755,
+      "laptop-4c": 611.3552999999999,
+      "laptop-1c": 869.7582
+    },
+    "violation_percent": {
+      "laptop-full": 97.24310776942356,
+      "laptop-4c": 99.87468671679198,
+      "laptop-1c": 99.87468671679198
+    },
+    "statements": [
+      "Median latency changes by 2.69x from laptop-full to laptop-1c .",
+      "It misses the deadline on 4 laptop cores, so a Raspberry Pi 5 very likely misses it too (one-way inference)."
+    ]
+  }
+]

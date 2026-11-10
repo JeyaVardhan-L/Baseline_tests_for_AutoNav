@@ -1,0 +1,110 @@
+[
+  {
+    "id": "total_ms",
+    "name": "Pipeline latency",
+    "unit": "ms",
+    "evidence": "MEASURED",
+    "definition": "Wall-clock time to process one frame that is already in memory: invalid-point removal, range filter, voxel downsample, ICP registration, validity gate and pose update.",
+    "calculation": "time.perf_counter around each stage in the worker process; total = preprocess + register. Warm-up frames and the initial reference frame are excluded.",
+    "interpretation": "Compare with the sensor period (100 ms at 10 Hz). Single-machine software timing; not a hard real-time guarantee."
+  },
+  {
+    "id": "e2e_ms",
+    "name": "End-to-end latency",
+    "unit": "ms",
+    "evidence": "MEASURED",
+    "definition": "Pipeline latency plus the time to read the frame from disk.",
+    "calculation": "load_ms + total_ms.",
+    "interpretation": "A live sensor driver delivers frames in memory, so total_ms is the primary number; e2e shows the file-I/O cost of offline replay."
+  },
+  {
+    "id": "percentiles",
+    "name": "P50 / P90 / P95 / P99 / max",
+    "unit": "ms",
+    "evidence": "DERIVED",
+    "definition": "Order statistics of per-frame latency pooled over all repeats.",
+    "calculation": "numpy.percentile, linear interpolation.",
+    "interpretation": "P99 and max describe the tail that causes missed frames."
+  },
+  {
+    "id": "violation_percent",
+    "name": "Deadline violation rate",
+    "unit": "% of frames",
+    "evidence": "DERIVED",
+    "definition": "Share of measured frames whose pipeline latency is strictly greater than the sensor period.",
+    "calculation": "count(total_ms > deadline) / frames measured.",
+    "interpretation": "The deadline statistic. A P95 below the deadline still allows 5 % of frames to miss it."
+  },
+  {
+    "id": "throughput_fps",
+    "name": "Sustained throughput",
+    "unit": "frames/s",
+    "evidence": "MEASURED",
+    "definition": "Frames processed per second of wall-clock time over the whole loop, file loading included.",
+    "calculation": "frames / loop wall time per repeat (min, median, max over repeats).",
+    "interpretation": "Must exceed the sensor rate (10 fps) to keep up in steady state."
+  },
+  {
+    "id": "peak_rss_mb",
+    "name": "Peak memory",
+    "unit": "MB",
+    "evidence": "MEASURED",
+    "definition": "Peak resident (working-set) memory of the worker process.",
+    "calculation": "psutil peak_wset (Windows) or ru_maxrss.",
+    "interpretation": "Process peak; machine RAM is a separate specification, not a measurement."
+  },
+  {
+    "id": "accepted_percent",
+    "name": "Accepted registrations",
+    "unit": "%",
+    "evidence": "DERIVED",
+    "definition": "Registrations that pass the validity gate (inlier ratio, residual, plausible motion) divided by attempts.",
+    "calculation": "Frame 0 is excluded (it has no registration). Thresholds are in run.json.",
+    "interpretation": "Rejections are counted by reason, never silently accepted."
+  },
+  {
+    "id": "ate_rmse_m",
+    "name": "Absolute trajectory error (RMSE)",
+    "unit": "m",
+    "evidence": "DERIVED",
+    "definition": "RMS position error between the estimated and ground-truth trajectories after a rigid SE(3) Umeyama alignment (no scale), using timestamp-associated poses.",
+    "calculation": "Association within 20 ms, one-to-one.",
+    "interpretation": "Needs ground truth. Without loop closure error grows with distance."
+  },
+  {
+    "id": "rpe",
+    "name": "Relative pose error (position)",
+    "unit": "m, % of segment",
+    "evidence": "DERIVED",
+    "definition": "Error of the displacement over fixed time or path-length windows, in the aligned world frame.",
+    "calculation": "Rotation RPE is UNAVAILABLE because the ground-truth body frame differs from the sensor frame (DEC-012).",
+    "interpretation": "Drift per unit motion; less sensitive to a single bad alignment than ATE."
+  },
+  {
+    "id": "icp_iterations",
+    "name": "ICP iterations",
+    "unit": "count",
+    "evidence": "MEASURED",
+    "definition": "Iterations before the convergence rule stopped (cap 30).",
+    "calculation": "Per registration.",
+    "interpretation": "Drives register_ms; hitting the cap flags poor initial alignment."
+  },
+  {
+    "id": "inlier_ratio",
+    "name": "Inlier ratio",
+    "unit": "fraction",
+    "evidence": "MEASURED",
+    "definition": "Source points with a target neighbour within 1.5 m, divided by source points.",
+    "calculation": "Last ICP iteration.",
+    "interpretation": "Low values mean little scan overlap or a wrong match."
+  },
+  {
+    "id": "residual_m",
+    "name": "Registration residual",
+    "unit": "m",
+    "evidence": "MEASURED",
+    "definition": "Mean distance of inlier correspondences at the start of the last iteration.",
+    "calculation": "Point-to-point distance for all variants.",
+    "interpretation": "Included in the validity gate."
+  }
+]

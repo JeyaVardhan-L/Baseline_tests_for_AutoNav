@@ -1,0 +1,127 @@
+{
+  "provenance": {
+    "dataset": "newer_college_sparse",
+    "sequence": "Newer College 2020, 01_short_experiment, thinned sample (11.3 % of scans)",
+    "sensor": "Ouster OS1-64 Gen1 (64 beams, 1024 columns, 10 Hz)",
+    "licence": "CC BY-NC-SA 4.0",
+    "evidence": "NON-CONSECUTIVE",
+    "run_id": "20261110T083801Z_newer_college_sparse_baseline-sf_laptop-full_0862f4f",
+    "commit": "0862f4fcbaf91fd7a9750a69be72419348ef1cb8",
+    "variant": "baseline",
+    "parameters": {
+      "voxel_size": 0.15,
+      "min_range": 0.5,
+      "max_range": 50.0,
+      "max_correspondence_distance": 1.5,
+      "max_iterations": 30,
+      "tolerance": 0.0001
+    },
+    "hardware_label": "Measured on 13th Gen Intel(R) Core(TM) i5-13420H (laptop-full); not a Raspberry Pi, not embedded hardware",
+    "attribution": "Data: Newer College 2020, 01_short_experiment, thinned sample (11.3 % of scans) (CC BY-NC-SA 4.0); decimated excerpts for illustration only."
+  },
+  "layers": [
+    {
+      "id": "stage_raw",
+      "role": "stage",
+      "stage": "raw",
+      "frame_index": 102,
+      "space": "sensor frame",
+      "points_before_decimation": 65536,
+      "file": "clouds/stage_raw.bin",
+      "note": "",
+      "n_points": 7282,
+      "origin": [
+        -37.98499298095703,
+        -17.505176544189453,
+        -2.9347000122070312
+      ],
+      "scale": 0.001074773652098622,
+      "dtype": "uint16-le",
+      "layout": "xyz interleaved",
+      "max_quantisation_error_m": 0.000537386826049311
+    },
+    {
+      "id": "stage_range",
+      "role": "stage",
+      "stage": "range",
+      "frame_index": 102,
+      "space": "sensor frame",
+      "points_before_decimation": 55886,
+      "file": "clouds/stage_range.bin",
+      "note": "",
+      "n_points": 5589,
+      "origin": [
+        -36.41627502441406,
+        -18.699304580688477,
+        -2.7743749618530273
+      ],
+      "scale": 0.0009958071485667696,
+      "dtype": "uint16-le",
+      "layout": "xyz interleaved",
+      "max_quantisation_error_m": 0.0004979035742833848
+    },
+    {
+      "id": "stage_voxel",
+      "role": "stage",
+      "stage": "voxel",
+      "frame_index": 102,
+      "space": "sensor frame",
+      "points_before_decimation": 36438,
+      "file": "clouds/stage_voxel.bin",
+      "note": "",
+      "n_points": 5206,
+      "origin": [
+        -36.77532958984375,
+        -16.654443740844727,
+        -2.7743749618530273
+      ],
+      "scale": 0.0009583288175140937,
+      "dtype": "uint16-le",
+      "layout": "xyz interleaved",
+      "max_quantisation_error_m": 0.00047916440875704684
+    },
+    {
+      "id": "stage_outlier",
+      "role": "stage",
+      "stage": "outlier",
+      "frame_index": 102,
+      "space": "sensor frame",
+      "points_before_decimation": 35511,
+      "file": "clouds/stage_outlier.bin",
+      "note": "",
+      "n_points": 5919,
+      "origin": [
+        -36.352970123291016,
+        -16.272560119628906,
+        -2.084367036819458
+      ],
+      "scale": 0.0009518923780924851,
+      "dtype": "uint16-le",
+      "layout": "xyz interleaved",
+      "max_quantisation_error_m": 0.00047594618904624257
+    }
+  ],
+  "pairs": {
+    "stage_frame": {
+      "frame_index": 102,
+      "stages": {
+        "raw": 65536,
+        "range": 55886,
+        "voxel": 36438,
+        "outlier": 35511
+      }
+    }
+  },
+  "window": {
+    "start": 0,
+    "stop": 200,
+    "n_frames": 200,
+    "of_total": 1734
+  },
+  "colour_roles": [
+    "source_before",
+    "source_after",
+    "target",
+    "stage"
+  ]
+}

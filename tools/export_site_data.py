@@ -113,9 +113,9 @@ def main() -> int:
     groups = {}
     for it in index:
         if it["mode"] == "pipeline":
-            groups.setdefault((it["dataset"], it["variant"]), {})[it["profile"]] = json.loads(
+            groups.setdefault((it["dataset"], it["variant"], it["label"]), {})[it["profile"]] = json.loads(
                 (a.out / "runs" / it["run_id"] / "summary.json").read_text(encoding="utf-8"))
-    comparisons = [{"dataset": k[0], "variant": k[1], **compare_profiles(v)} for k, v in groups.items() if len(v) > 1]
+    comparisons = [{"dataset": k[0], "variant": k[1], "label": k[2], **compare_profiles(v)} for k, v in groups.items() if len(v) > 1]
     datasets = {k: {kk: v[kk] for kk in ("sensor", "sequence", "licence", "evidence", "consecutive", "nominal_hz", "same_sensor_as_target")}
                 for k, v in DATASETS.items() if k != "synthetic"}
     (a.out / "index.json").write_text(json.dumps({"runs": index}, indent=2), encoding="utf-8")

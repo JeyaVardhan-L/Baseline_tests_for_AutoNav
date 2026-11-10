@@ -1,0 +1,315 @@
+{
+  "provenance": {
+    "dataset": "oxford_spires",
+    "sequence": "Oxford Spires, one window",
+    "sensor": "Hesai QT64 (64 beams) - DIFFERENT from OS1-64 (beam layout, FOV, range)",
+    "licence": "see docs/decision-log.md",
+    "evidence": "REAL",
+    "run_id": "20261110T095748Z_oxford_spires_p2plane_laptop-full_5539c47",
+    "commit": "5539c47c8ef08ee0813c9bf0749287b6377ad234",
+    "variant": "p2plane",
+    "parameters": {
+      "voxel_size": 0.15,
+      "min_range": 0.5,
+      "max_range": 50.0,
+      "max_correspondence_distance": 1.5,
+      "max_iterations": 30,
+      "tolerance": 0.0001
+    },
+    "hardware_label": "Measured on 13th Gen Intel(R) Core(TM) i5-13420H (laptop-full); not a Raspberry Pi, not embedded hardware",
+    "attribution": "Data: Oxford Spires, one window (see docs/decision-log.md); decimated excerpts for illustration only."
+  },
+  "layers": [
+    {
+      "id": "typical_target",
+      "role": "target",
+      "stage": "target",
+      "frame_index": 111,
+      "space": "sensor frame of scan 111",
+      "points_before_decimation": 16736,
+      "file": "clouds/typical_target.bin",
+      "note": "",
+      "n_points": 4184,
+      "origin": [
+        -42.255130767822266,
+        -39.72385787963867,
+        -5.449845790863037
+      ],
+      "scale": 0.001261927816481651,
+      "dtype": "uint16-le",
+      "layout": "xyz interleaved",
+      "max_quantisation_error_m": 0.0006309639082408255
+    },
+    {
+      "id": "typical_source_before",
+      "role": "source_before",
+      "stage": "source_before",
+      "frame_index": 112,
+      "space": "sensor frame of scan 112",
+      "points_before_decimation": 16774,
+      "file": "clouds/typical_source_before.bin",
+      "note": "",
+      "n_points": 4194,
+      "origin": [
+        -42.27611541748047,
+        -38.03139877319336,
+        -4.378811359405518
+      ],
+      "scale": 0.0012970744876828102,
+      "dtype": "uint16-le",
+      "layout": "xyz interleaved",
+      "max_quantisation_error_m": 0.0006485372438414051
+    },
+    {
+      "id": "typical_source_after",
+      "role": "source_after",
+      "stage": "source_after",
+      "frame_index": 112,
+      "space": "scan 112 registered into scan 111",
+      "points_before_decimation": 16774,
+      "file": "clouds/typical_source_after.bin",
+      "note": "",
+      "n_points": 4194,
+      "origin": [
+        -42.14425752077903,
+        -38.07095766927069,
+        -5.375842660430418
+      ],
+      "scale": 0.0012844549610455723,
+      "dtype": "uint16-le",
+      "layout": "xyz interleaved",
+      "max_quantisation_error_m": 0.0006422274805227862
+    },
+    {
+      "id": "stage_raw",
+      "role": "stage",
+      "stage": "raw",
+      "frame_index": 112,
+      "space": "sensor frame",
+      "points_before_decimation": 58658,
+      "file": "clouds/stage_raw.bin",
+      "note": "",
+      "n_points": 7333,
+      "origin": [
+        -44.81373596191406,
+        -49.197811126708984,
+        -4.2562479972839355
+      ],
+      "scale": 0.001390937344746158,
+      "dtype": "uint16-le",
+      "layout": "xyz interleaved",
+      "max_quantisation_error_m": 0.000695468672373079
+    },
+    {
+      "id": "stage_range",
+      "role": "stage",
+      "stage": "range",
+      "frame_index": 112,
+      "space": "sensor frame",
+      "points_before_decimation": 51813,
+      "file": "clouds/stage_range.bin",
+      "note": "",
+      "n_points": 5757,
+      "origin": [
+        -35.914615631103516,
+        -39.874473571777344,
+        -4.594711780548096
+      ],
+      "scale": 0.0011822330948962148,
+      "dtype": "uint16-le",
+      "layout": "xyz interleaved",
+      "max_quantisation_error_m": 0.0005911165474481074
+    },
+    {
+      "id": "stage_voxel",
+      "role": "stage",
+      "stage": "voxel",
+      "frame_index": 112,
+      "space": "sensor frame",
+      "points_before_decimation": 16774,
+      "file": "clouds/stage_voxel.bin",
+      "note": "",
+      "n_points": 5592,
+      "origin": [
+        -42.27611541748047,
+        -39.874473571777344,
+        -4.594711780548096
+      ],
+      "scale": 0.0012989348329122202,
+      "dtype": "uint16-le",
+      "layout": "xyz interleaved",
+      "max_quantisation_error_m": 0.0006494674164561101
+    },
+    {
+      "id": "worst_target",
+      "role": "target",
+      "stage": "target",
+      "frame_index": 292,
+      "space": "sensor frame of scan 292",
+      "points_before_decimation": 15949,
+      "file": "clouds/worst_target.bin",
+      "note": "",
+      "n_points": 3988,
+      "origin": [
+        -46.66929626464844,
+        -38.404911041259766,
+        -4.503944396972656
+      ],
+      "scale": 0.0011618168828616,
+      "dtype": "uint16-le",
+      "layout": "xyz interleaved",
+      "max_quantisation_error_m": 0.0005809084414308
+    },
+    {
+      "id": "worst_source_before",
+      "role": "source_before",
+      "stage": "source_before",
+      "frame_index": 293,
+      "space": "sensor frame of scan 293",
+      "points_before_decimation": 15932,
+      "file": "clouds/worst_source_before.bin",
+      "note": "",
+      "n_points": 3983,
+      "origin": [
+        -46.0001335144043,
+        -48.674312591552734,
+        -5.522426605224609
+      ],
+      "scale": 0.0011141338073353277,
+      "dtype": "uint16-le",
+      "layout": "xyz interleaved",
+      "max_quantisation_error_m": 0.0005570669036676639
+    },
+    {
+      "id": "worst_source_after",
+      "role": "source_after",
+      "stage": "source_after",
+      "frame_index": 293,
+      "space": "scan 293 registered into scan 292",
+      "points_before_decimation": 15932,
+      "file": "clouds/worst_source_after.bin",
+      "note": "",
+      "n_points": 3983,
+      "origin": [
+        -46.218846034729246,
+        -48.56532020705946,
+        -5.578893712128014
+      ],
+      "scale": 0.0011142776235040725,
+      "dtype": "uint16-le",
+      "layout": "xyz interleaved",
+      "max_quantisation_error_m": 0.0005571388117520362
+    }
+  ],
+  "pairs": {
+    "typical": {
+      "frame_index": 112,
+      "total_ms": 541.0303,
+      "icp_iterations": 15,
+      "inlier_ratio": 0.9982115178252057,
+      "residual_m": 0.1456292444703203,
+      "accepted": true,
+      "reject_reason": "",
+      "residual_history_m": [
+        0.24961259933239074,
+        0.21449377104487521,
+        0.19807473231628028,
+        0.18939920692303325,
+        0.18481892556281282,
+        0.18131783701983878,
+        0.17572253304388216,
+        0.16305091315789977,
+        0.1540714170035216,
+        0.14973995583032373,
+        0.14746697363807695,
+        0.14622881079150687,
+        0.14569249671610046,
+        0.14554720605625923,
+        0.1456292444703203
+      ],
+      "transform_target_from_source": [
+        [
+          0.9994402128097823,
+          0.019581899587915393,
+          -0.027125822149091216,
+          -0.18540176307848988
+        ],
+        [
+          -0.019798106677574593,
+          0.9997741542054362,
+          -0.007724995455263231,
+          -0.0005314046733176235
+        ],
+        [
+          0.026968425810912706,
+          0.00825771102238741,
+          0.9996021779777945,
+          -0.03176588398902421
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    "worst": {
+      "frame_index": 293,
+      "total_ms": 2876.7601,
+      "icp_iterations": 8,
+      "inlier_ratio": 0.9978659302033643,
+      "residual_m": 0.15657291168073104,
+      "accepted": true,
+      "reject_reason": "",
+      "residual_history_m": [
+        0.17886378950198284,
+        0.16494940170935807,
+        0.16046097353406708,
+        0.15919918744891176,
+        0.15775970084696556,
+        0.15670350703654426,
+        0.15647445631379275,
+        0.15657291168073104
+      ],
+      "transform_target_from_source": [
+        [
+          0.9999843348005215,
+          0.004261631541033954,
+          0.0036288634820497456,
+          -0.14295207269289228
+        ],
+        [
+          -0.004254953620701014,
+          0.9999892438431305,
+          -0.0018459598400324192,
+          0.13415011122578663
+        ],
+        [
+          -0.0036366912501023187,
+          0.0018304902768911972,
+          0.9999917118567019,
+          -0.00043701245253592163
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    }
+  },
+  "window": {
+    "start": 0,
+    "stop": 300,
+    "n_frames": 300,
+    "of_total": 300
+  },
+  "colour_roles": [
+    "source_before",
+    "source_after",
+    "target",
+    "stage"
+  ]
+}

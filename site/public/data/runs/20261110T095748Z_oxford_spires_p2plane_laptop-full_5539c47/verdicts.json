@@ -1,0 +1,70 @@
+{
+  "rules_version": 1,
+  "run_id": "20261110T095748Z_oxford_spires_p2plane_laptop-full_5539c47",
+  "hardware_label": "Measured on 13th Gen Intel(R) Core(TM) i5-13420H (laptop-full); not a Raspberry Pi, not embedded hardware",
+  "profile_claim": "Development-laptop performance (no limits).",
+  "evidence": "REAL",
+  "verdicts": [
+    {
+      "id": "deadline",
+      "question": "Did the pipeline meet the 100 ms deadline?",
+      "status": "fail",
+      "statement": "No. 100.0 % of 888 frames missed 100 ms. Median latency 518 ms is 5.2x the deadline; P99 is 794 ms.",
+      "rule": "pass: 0 violations; warn: 0 < violations <= 5 %; fail: violations > 5 %. Violation = per-frame pipeline latency (preprocess + register) strictly greater than the deadline.",
+      "evidence": {
+        "deadline_ms": 100.0,
+        "p50_ms": 517.58795,
+        "p95_ms": 657.842765,
+        "p99_ms": 794.00649,
+        "max_ms": 2876.7601,
+        "violation_percent": 100.0,
+        "frames_measured": 888
+      }
+    },
+    {
+      "id": "registration",
+      "question": "Did registration produce valid matches?",
+      "status": "pass",
+      "statement": "299 of 299 registrations passed the validity gate (100.0 %).",
+      "rule": "pass: >= 99 % accepted; warn: >= 90 %; fail: < 90 %. Accepted = passes the registration validity gate.",
+      "evidence": {
+        "attempts": 299,
+        "accepted": 299,
+        "rejected": 0,
+        "rejected_by_reason": {},
+        "icp_iterations_median": 6.0,
+        "inlier_ratio_median": 0.99794,
+        "residual_median_m": 0.16729
+      }
+    },
+    {
+      "id": "accuracy",
+      "question": "How accurate was the estimated trajectory?",
+      "status": "info",
+      "statement": "ATE RMSE 0.15 m (max 0.42 m) over 45.6 m of ground-truth path after rigid alignment; position RPE is reported per window in the summary. Scan-to-scan odometry has no loop closure, so error accumulates with distance.",
+      "rule": "descriptive; no pass/fail threshold is applied to accuracy",
+      "evidence": {
+        "ate_rmse_m": 0.15251217145307253,
+        "ate_max_m": 0.4168300997306193,
+        "gt_path_length_m": 45.563618073800534,
+        "ate_rmse_percent_of_path": 0.3347235753009007,
+        "final_error_m": 0.15346740111930274,
+        "rpe_mode": "world_position_after_umeyama_alignment",
+        "rpe": {
+          "time_1s": null,
+          "time_5s": null,
+          "distance_5m": 1.7766911665036935,
+          "distance_10m": 1.3573782967742307
+        }
+      }
+    },
+    {
+      "id": "sensor",
+      "question": "Does this result describe the OS1-64?",
+      "status": "warn",
+      "statement": "No. This dataset uses a different sensor (Hesai QT64 (64 beams) - DIFFERENT from OS1-64 (beam layout, FOV, range)); do not read it as an OS1-64 result.",
+      "rule": "dataset.same_sensor_as_target is false",
+      "evidence": {}
+    }
+  ]
+}

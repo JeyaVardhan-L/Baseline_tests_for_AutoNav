@@ -1,0 +1,62 @@
+{
+  "rules_version": 1,
+  "run_id": "20261110T091234Z_newer_college_bag9_p2plane_laptop-full_5539c47",
+  "hardware_label": "Measured on 13th Gen Intel(R) Core(TM) i5-13420H (laptop-full); not a Raspberry Pi, not embedded hardware",
+  "profile_claim": "Development-laptop performance (no limits).",
+  "evidence": "REAL",
+  "verdicts": [
+    {
+      "id": "deadline",
+      "question": "Did the pipeline meet the 100 ms deadline?",
+      "status": "fail",
+      "statement": "No. 100.0 % of 798 frames missed 100 ms. Median latency 734 ms is 7.3x the deadline; P99 is 1232 ms.",
+      "rule": "pass: 0 violations; warn: 0 < violations <= 5 %; fail: violations > 5 %. Violation = per-frame pipeline latency (preprocess + register) strictly greater than the deadline.",
+      "evidence": {
+        "deadline_ms": 100.0,
+        "p50_ms": 734.24235,
+        "p95_ms": 996.8155599999999,
+        "p99_ms": 1232.468592,
+        "max_ms": 1770.1241,
+        "violation_percent": 100.0,
+        "frames_measured": 798
+      }
+    },
+    {
+      "id": "registration",
+      "question": "Did registration produce valid matches?",
+      "status": "pass",
+      "statement": "269 of 269 registrations passed the validity gate (100.0 %).",
+      "rule": "pass: >= 99 % accepted; warn: >= 90 %; fail: < 90 %. Accepted = passes the registration validity gate.",
+      "evidence": {
+        "attempts": 269,
+        "accepted": 269,
+        "rejected": 0,
+        "rejected_by_reason": {},
+        "icp_iterations_median": 5.0,
+        "inlier_ratio_median": 0.99932,
+        "residual_median_m": 0.1277
+      }
+    },
+    {
+      "id": "accuracy",
+      "question": "How accurate was the estimated trajectory?",
+      "status": "info",
+      "statement": "ATE RMSE 0.15 m (max 0.35 m) over 22.5 m of ground-truth path after rigid alignment; position RPE is reported per window in the summary. Scan-to-scan odometry has no loop closure, so error accumulates with distance.",
+      "rule": "descriptive; no pass/fail threshold is applied to accuracy",
+      "evidence": {
+        "ate_rmse_m": 0.15113568120206913,
+        "ate_max_m": 0.3455220968441755,
+        "gt_path_length_m": 22.472984119767467,
+        "ate_rmse_percent_of_path": 0.6725216393008022,
+        "final_error_m": 0.13946928656653032,
+        "rpe_mode": "world_position_after_umeyama_alignment",
+        "rpe": {
+          "time_1s": 5.750016296771894,
+          "time_5s": 3.1595127075470955,
+          "distance_5m": 2.9858696453402276,
+          "distance_10m": 2.528365538024447
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "rules_version": 1,
+  "run_id": "20261110T083801Z_newer_college_sparse_baseline-sf_laptop-full_0862f4f",
+  "hardware_label": "Measured on 13th Gen Intel(R) Core(TM) i5-13420H (laptop-full); not a Raspberry Pi, not embedded hardware",
+  "profile_claim": "Development-laptop performance (no limits).",
+  "evidence": "REAL-NON-CONSECUTIVE",
+  "verdicts": [
+    {
+      "id": "preprocessing",
+      "question": "What does preprocessing alone cost per frame?",
+      "status": "fail",
+      "statement": "Preprocessing (invalid-point removal, range filter, voxel downsample) takes a median 143 ms (P95 186 ms); the voxel stage alone is 133 ms. That already exceeds the deadline before any registration. Non-consecutive frames: no odometry or accuracy claim.",
+      "rule": "fail if the median preprocessing latency exceeds the deadline",
+      "evidence": {
+        "deadline_ms": 100.0,
+        "preprocess_p50_ms": 142.6959,
+        "preprocess_p95_ms": 186.46445,
+        "voxel_p50_ms": 133.3462,
+        "frames": 591
+      }
+    }
+  ]
+}

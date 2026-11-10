@@ -204,3 +204,22 @@ All significant design and engineering decisions are recorded here with context,
 | **Finding** | The first `optimized` measurements (commit 5539c47) showed no gain on one core (723 ms vs 671 ms baseline median). Profiling one real frame pair (single thread, 32k points): voxel filter 128 ms -> 13 ms, but a `balanced_tree=False, compact_nodes=False` tree queried 63 ms vs 47 ms for the default tree. Over ~10 ICP iterations that cancels the voxel gain. |
 | **Decision** | v2 uses the default tree. The v1 runs stay on disk, are labelled `phase5`, and are not published; published `optimized` runs are the v2 re-measurements. |
 | **Lesson** | Implementation tuning must be measured per stage; a cheaper build is not a cheaper pipeline. |
+
+## DEC-020 — Published run data is committed under site/public/data
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-11-10 |
+| **Status** | ACCEPTED |
+| **Decision** | `artifacts/runs/` stays git-ignored, but `tools/export_site_data.py` output (`site/public/data`, 5.3 MB: summaries, per-frame CSV, verdicts, decimated clouds of at most ~6,000 points per layer) is committed so a Pages build can run from the repository alone. The excerpts carry attribution and are few and heavily decimated, within the CC BY-NC-SA 4.0 terms of both datasets. Raw clouds are never committed. |
+
+## DEC-021 — Which runs are published; the machine was not isolated
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-11-10 |
+| **Status** | ACCEPTED (owner instruction: no further benchmarks; publish what is on disk) |
+| **Published** | 15 runs: baseline x 3 profiles (phase3), optimized v2 x 3 profiles, p2plane, a controlled baseline + optimized pair with 5 repeats (`final`), single-frame study, Spires baseline x 3 profiles, Spires optimized v2 and p2plane. |
+| **Not published** | optimized v1 (superseded, DEC-019), synthetic smoke runs (refused by the exporter), the interrupted p2plane `final` run (incomplete; stopped on request). |
+| **Machine conditions** | Shared development laptop, not an isolated benchmark host. At sampling: AC power, Balanced power plan, ~66 % processor performance (1500 of 2100 MHz), 1.9-2.7 GB RAM available. Run-to-run drift is large: the same variant's repeat medians differ by up to 2.4x (for example optimized v2 repeats of 218, 346 and 523 ms) and baseline medians ranged 650-890 ms across sessions. Runs from the first sessions have no recorded background load (`conditions_before_run` was added later). Several early runs carry `git.dirty = true` (harness files were uncommitted); the algorithm code they exercised is unchanged except for an added default-valued `workers` parameter. |
+| **Consequence** | Conclusions use the violation rate and ordering with the per-repeat spread; differences smaller than the spread are not claimed. |

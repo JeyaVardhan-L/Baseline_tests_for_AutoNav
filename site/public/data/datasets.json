@@ -1,0 +1,29 @@
+{
+  "newer_college_bag9": {
+    "sensor": "Ouster OS1-64 Gen1 (64 beams, 1024 columns, 10 Hz)",
+    "sequence": "Newer College 2020, 01_short_experiment, bag 9 (last 27 s)",
+    "licence": "CC BY-NC-SA 4.0",
+    "evidence": "REAL",
+    "consecutive": true,
+    "nominal_hz": 10.0,
+    "same_sensor_as_target": true
+  },
+  "newer_college_sparse": {
+    "sensor": "Ouster OS1-64 Gen1 (64 beams, 1024 columns, 10 Hz)",
+    "sequence": "Newer College 2020, 01_short_experiment, thinned sample (11.3 % of scans)",
+    "licence": "CC BY-NC-SA 4.0",
+    "evidence": "REAL-NON-CONSECUTIVE",
+    "consecutive": false,
+    "nominal_hz": 10.0,
+    "same_sensor_as_target": true
+  },
+  "oxford_spires": {
+    "sensor": "Hesai QT64 (64 beams) - DIFFERENT from OS1-64 (beam layout, FOV, range)",
+    "sequence": "Oxford Spires, one window",
+    "licence": "see docs/decision-log.md",
+    "evidence": "REAL",
+    "consecutive": true,
+    "nominal_hz": 10.0,
+    "same_sensor_as_target": false
+  }
+}
