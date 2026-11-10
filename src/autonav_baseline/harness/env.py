@@ -51,6 +51,16 @@ def blas_config() -> Dict[str, Any]:
         return {"note": "numpy.show_config unavailable"}
 
 
+def _power_plan() -> str:
+    try:
+        if sys.platform == "win32":
+            out = subprocess.check_output(["powercfg", "/getactivescheme"], text=True, stderr=subprocess.DEVNULL)
+            return out.split("(")[-1].strip(") \r\n")
+    except Exception:
+        pass
+    return "UNKNOWN"
+
+
 def collect_environment() -> Dict[str, Any]:
     import psutil
     import scipy
@@ -78,6 +88,12 @@ def collect_environment() -> Dict[str, Any]:
         "thread_env": {k: os.environ.get(k) for k in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS")},
         "cpu_affinity_effective": affinity,
         "gpu": "not used (CPU-only pipeline)",
+        "conditions_before_run": {
+            "system_cpu_percent_1s": psutil.cpu_percent(interval=1.0),
+            "ram_available_gb": round(psutil.virtual_memory().available / 1024 ** 3, 2),
+            "power_plan": _power_plan(),
+            "note": "The machine is a shared development laptop, not an isolated benchmark host; other applications may be running.",
+        },
     }
 
 
