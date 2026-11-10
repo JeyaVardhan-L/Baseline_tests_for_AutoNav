@@ -93,7 +93,7 @@ def main() -> int:
             row.update(preprocess_ms=round(pre, 4), register_ms=0.0, total_ms=round(pre, 4), e2e_ms=round(load_ms + pre, 4),
                        invalid_ms=round((t_inv - t) * 1000, 4), range_ms=round((t_rng - t_inv) * 1000, 4),
                        voxel_ms=round((t_vox - t_rng) * 1000, 4), outlier_ms=round((t_sor - t_vox) * 1000, 4),
-                       points_valid=len(pts) if False else "", points_range=n_range, points_voxel=len(pts),
+                       points_range=n_range, points_voxel=len(pts),
                        points_outlier=len(out_pts), warmup=int(k < warmup))
         else:
             r = odo.process_frame(frame.points, idx, frame.timestamp)

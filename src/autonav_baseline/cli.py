@@ -62,7 +62,9 @@ def main(argv=None) -> int:
         from autonav_baseline.harness.verdict import generate_verdicts
         from autonav_baseline.harness.viz import export_viz
         from autonav_baseline.reporting.exporter import sanitize_paths
+        from autonav_baseline.harness.runner import reevaluate_accuracy
         rd = runs_dir / a.run_id
+        reevaluate_accuracy(rd)   # recompute ATE/RPE from stored poses; no benchmark is run
         run = json.loads((rd / "run.json").read_text(encoding="utf-8"))
         summary = json.loads((rd / "summary.json").read_text(encoding="utf-8"))
         (rd / "verdicts.json").write_text(json.dumps(sanitize_paths(generate_verdicts(summary, run)), indent=2), encoding="utf-8")

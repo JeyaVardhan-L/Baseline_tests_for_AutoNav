@@ -31,7 +31,7 @@ const primary = runs().find((r) => r.mode === 'pipeline' && r.dataset === 'newer
       </div>
       <div class="card"><h3>5 · Evaluation</h3>
         <p>Poses are matched to ground truth by timestamp (within 20 ms). ATE is the position error after a rigid Umeyama alignment. RPE is the position error over fixed time or path-length windows.</p>
-        <p class="notice">The ground-truth body frame differs from the sensor frame (a ~141° yaw was observed), so rotation RPE is <b>UNAVAILABLE</b> and RPE uses world-frame positions. See decision DEC-012 in the repository.</p>
+        <p class="notice">The ground-truth body frame differs from the sensor frame (a ~141° yaw was observed), so rotation RPE is <b>UNAVAILABLE</b> and RPE uses world-frame positions after a global alignment. That removes the step-direction offset but not a sensor-to-body lever arm, so ATE and position RPE mix drift with extrinsic bias. See decision DEC-012 in the repository.</p>
       </div>
       <div class="card"><h3>6 · Variants</h3>
         <ul style="padding-left:18px;margin:0">

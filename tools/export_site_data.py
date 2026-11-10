@@ -50,10 +50,10 @@ METRICS = [
      "calculation": "Frame 0 is excluded (it has no registration). Thresholds are in run.json.", "interpretation": "Rejections are counted by reason, never silently accepted."},
     {"id": "ate_rmse_m", "name": "Absolute trajectory error (RMSE)", "unit": "m", "evidence": "DERIVED",
      "definition": "RMS position error between the estimated and ground-truth trajectories after a rigid SE(3) Umeyama alignment (no scale), using timestamp-associated poses.",
-     "calculation": "Association within 20 ms, one-to-one.", "interpretation": "Needs ground truth. Without loop closure error grows with distance."},
+     "calculation": "Association within 20 ms, one-to-one.", "interpretation": "Needs ground truth. Without loop closure error grows with distance. It also includes any unmodelled sensor-to-body offset (lever arm) between the estimated sensor positions and the ground-truth body positions, so it mixes drift with extrinsic bias."},
     {"id": "rpe", "name": "Relative pose error (position)", "unit": "m, % of segment", "evidence": "DERIVED",
      "definition": "Error of the displacement over fixed time or path-length windows, in the aligned world frame.",
-     "calculation": "Rotation RPE is UNAVAILABLE because the ground-truth body frame differs from the sensor frame (DEC-012).",
+     "calculation": "Rotation RPE is UNAVAILABLE because the ground-truth body frame differs from the sensor frame (DEC-012). Position RPE removes the step-direction (yaw) offset but not a lever arm, and the global alignment is fitted over the whole window, so it is mildly optimistic.",
      "interpretation": "Drift per unit motion; less sensitive to a single bad alignment than ATE."},
     {"id": "icp_iterations", "name": "ICP iterations", "unit": "count", "evidence": "MEASURED",
      "definition": "Iterations before the convergence rule stopped (cap 30).", "calculation": "Per registration.", "interpretation": "Drives register_ms; hitting the cap flags poor initial alignment."},
@@ -65,12 +65,15 @@ METRICS = [
 
 
 def scan(text: str, where: str):
-    bad = [p for p in (r"[A-Za-z]:\\Users\\", r"/home/[a-z]+/", r"drive\.google\.com", r"[A-Za-z0-9_-]{33}(?=\W)") if re.search(p, text)]
-    # the 33-char pattern is a Drive-id heuristic; ignore git commit hashes (hex only) and run ids
-    bad = [b for b in bad if not (b.startswith("[A-Za-z0-9_-]{33}") and not re.search(r"(?<![A-Za-z0-9_-])(?=[A-Za-z0-9_-]*[A-Z])(?=[A-Za-z0-9_-]*[a-z])(?=[A-Za-z0-9_-]*\d)[A-Za-z0-9_-]{33}(?![A-Za-z0-9_-])", text))]
+    """Abort the export if a file contains a machine path, e-mail address, Drive link or Drive-id-like token."""
+    home = Path.home().name
+    pats = [r"[A-Za-z]:[\\/]+Users[\\/]", r"/home/[a-z]", r"/Users/[A-Za-z]", r"drive\.google\.com",
+            r"[\w.+-]+@[\w-]+\.[\w.-]+", r"(?<![A-Za-z0-9_-])(?=[A-Za-z0-9_-]*[A-Z])(?=[A-Za-z0-9_-]*[a-z])(?=[A-Za-z0-9_-]*\d)[A-Za-z0-9_-]{33}(?![A-Za-z0-9_-])"]
+    if home and len(home) > 3:
+        pats.append(re.escape(home))
+    bad = [p for p in pats if re.search(p, text)]
     if bad:
         raise SystemExit(f"refusing to export: {where} matches private-data pattern {bad}")
-
 
 def main() -> int:
     ap = argparse.ArgumentParser()

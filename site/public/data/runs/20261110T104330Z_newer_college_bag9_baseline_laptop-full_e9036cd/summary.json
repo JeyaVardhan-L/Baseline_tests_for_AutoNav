@@ -282,29 +282,29 @@
     "rpe": {
       "time_1s": {
         "translation_m": {
-          "n": 124,
-          "rmse": 0.3168514308747757,
-          "mean": 0.2663287053795468,
-          "median": 0.22359489961178336,
-          "p95": 0.6786855496590201,
+          "n": 260,
+          "rmse": 0.28585029272419754,
+          "mean": 0.24028639110707817,
+          "median": 0.210636322990087,
+          "p95": 0.5894777821391721,
           "max": 0.7231163927963788
         },
         "rotation_deg": "UNAVAILABLE",
-        "mean_segment_length_m": 0.8915640575352238,
-        "translation_percent_of_length": 29.87207740471578
+        "mean_segment_length_m": 0.841105265775907,
+        "translation_percent_of_length": 28.56793327591613
       },
       "time_5s": {
         "translation_m": {
-          "n": 100,
-          "rmse": 0.7209675443197309,
-          "mean": 0.6442184708201262,
-          "median": 0.5553334817595865,
-          "p95": 1.3432588970703798,
+          "n": 220,
+          "rmse": 0.710379640856785,
+          "mean": 0.6361708748280206,
+          "median": 0.5654193008723121,
+          "p95": 1.2661712151538542,
           "max": 1.4517930197404028
         },
         "rotation_deg": "UNAVAILABLE",
-        "mean_segment_length_m": 4.079280905872613,
-        "translation_percent_of_length": 15.792451799352591
+        "mean_segment_length_m": 4.367013225420028,
+        "translation_percent_of_length": 14.567642505063228
       },
       "distance_5m": {
         "translation_m": {
@@ -347,5 +347,6 @@
     "ate_rmse_m": 0.5068686215458409,
     "gt_path_length_m": 22.472984119767467,
     "deadline_ms": 100.0
-  }
+  },
+  "accuracy_reevaluated_from_stored_poses": true
 }

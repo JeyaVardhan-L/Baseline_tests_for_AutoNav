@@ -255,10 +255,30 @@
     "final_position_error_after_alignment_m": 0.15346740111930274,
     "rpe": {
       "time_1s": {
-        "n": 0
+        "translation_m": {
+          "n": 257,
+          "rmse": 0.06871185284926137,
+          "mean": 0.05970024374137174,
+          "median": 0.054092869975764554,
+          "p95": 0.12789617064664036,
+          "max": 0.2025979121637004
+        },
+        "rotation_deg": "UNAVAILABLE",
+        "mean_segment_length_m": 1.5213719517640285,
+        "translation_percent_of_length": 3.924105717352643
       },
       "time_5s": {
-        "n": 0
+        "translation_m": {
+          "n": 230,
+          "rmse": 0.12494565247669949,
+          "mean": 0.1145703516729357,
+          "median": 0.10377838728029253,
+          "p95": 0.2024915324054915,
+          "max": 0.25808581249760515
+        },
+        "rotation_deg": "UNAVAILABLE",
+        "mean_segment_length_m": 7.613421626227965,
+        "translation_percent_of_length": 1.5048470621703773
       },
       "distance_5m": {
         "translation_m": {
@@ -301,5 +321,6 @@
     "ate_rmse_m": 0.15251217145307253,
     "gt_path_length_m": 45.563618073800534,
     "deadline_ms": 100.0
-  }
+  },
+  "accuracy_reevaluated_from_stored_poses": true
 }

@@ -263,11 +263,10 @@ def evaluate_trajectory(
     rpe: Dict[str, Any] = {}
     for sec in rpe_seconds:
         target = tt + sec
-        j = np.searchsorted(tt, target)
-        valid = j < len(tt)
-        i = np.flatnonzero(valid)
-        j = j[valid]
-        close = np.abs(tt[j] - target[i]) <= max_dt
+        j = np.clip(np.searchsorted(tt, target), 1, len(tt) - 1)
+        j = np.where(np.abs(tt[j - 1] - target) <= np.abs(tt[j] - target), j - 1, j)   # nearer neighbour
+        i = np.arange(len(tt))
+        close = (np.abs(tt[j] - target) <= max_dt) & (j > i)
         i, j = i[close], j[close]
         if len(i) == 0:
             rpe[f"time_{sec:g}s"] = {"n": 0}

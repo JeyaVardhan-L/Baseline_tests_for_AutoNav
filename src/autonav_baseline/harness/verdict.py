@@ -66,6 +66,7 @@ def accuracy_verdict(summary: Dict[str, Any]) -> Dict[str, Any]:
     return _v("accuracy", "How accurate was the estimated trajectory?", "info",
               f"ATE RMSE {ate['rmse']:.2f} m (max {ate['max']:.2f} m) over {path:.1f} m of ground-truth path "
               f"after rigid alignment; position RPE is reported per window in the summary. "
+              "Both include any unmodelled sensor-to-body offset (lever arm) between the estimate and the ground-truth body frame, so they mix drift with extrinsic bias. "
               "Scan-to-scan odometry has no loop closure, so error accumulates with distance.",
               "descriptive; no pass/fail threshold is applied to accuracy", ev)
 
@@ -101,17 +102,31 @@ def generate_verdicts(summary: Dict[str, Any], run: Dict[str, Any]) -> Dict[str,
 
 
 def compare_profiles(runs: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
-    """runs: profile_id -> summary. Deadline scaling verdict with the one-way inference rule."""
+    """
+    runs: profile_id -> summary. Scaling statements are gated on the run-to-run spread of the per-repeat
+    median: two profiles are only called different if their [min, max] ranges do not overlap.
+    The Raspberry Pi inference is an ASSUMED one-way inference, not a measurement.
+    """
     p50 = {k: s["latency_ms"]["total_ms"]["p50"] for k, s in runs.items()}
+    rng = {k: (s["repeat_spread"]["p50"]["min"], s["repeat_spread"]["p50"]["max"]) for k, s in runs.items()}
     viol = {k: s["deadline"]["pipeline_total_ms"]["violation_percent"] for k, s in runs.items()}
-    full, one = p50.get("laptop-full"), p50.get("laptop-1c")
-    note = []
-    if full and one:
-        note.append(f"Median latency changes by {one / full:.2f}x from laptop-full to laptop-1c "
-                    + ("(the pipeline is effectively single-threaded)." if 0.9 <= one / full <= 1.1 else "."))
+    notes: List[str] = []
+    order = [k for k in ("laptop-full", "laptop-4c", "laptop-1c") if k in runs]
+    for a, b in zip(order, order[1:]):
+        overlap = rng[a][0] <= rng[b][1] and rng[b][0] <= rng[a][1]
+        if overlap:
+            notes.append(f"{a} vs {b}: per-repeat median ranges overlap ({rng[a][0]:.0f}-{rng[a][1]:.0f} ms vs "
+                         f"{rng[b][0]:.0f}-{rng[b][1]:.0f} ms); no difference is claimed.")
+        else:
+            faster, slower = (a, b) if rng[a][1] < rng[b][0] else (b, a)
+            notes.append(f"{faster} is faster than {slower} beyond run-to-run spread "
+                         f"(median {p50[faster]:.0f} ms vs {p50[slower]:.0f} ms).")
+    notes.append("Profiles were measured at different times on a shared, non-isolated laptop; a non-monotonic "
+                 "ordering across profiles reflects machine drift as much as core count.")
     four = viol.get("laptop-4c")
     if four is not None and four > 0:
-        note.append("It misses the deadline on 4 laptop cores, so a Raspberry Pi 5 very likely misses it too (one-way inference).")
+        notes.append("[ASSUMED, one-way inference, not measured] It misses the deadline on 4 laptop cores, so a "
+                     "Raspberry Pi 5 very likely misses it too.")
     elif four == 0:
-        note.append("It meets the deadline on 4 laptop cores; this says nothing about a Raspberry Pi 5.")
-    return {"p50_ms": p50, "violation_percent": viol, "statements": note}
+        notes.append("It meets the deadline on 4 laptop cores; this says nothing about a Raspberry Pi 5.")
+    return {"p50_ms": p50, "p50_repeat_range_ms": rng, "violation_percent": viol, "statements": notes}

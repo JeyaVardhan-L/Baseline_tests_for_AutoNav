@@ -15,13 +15,14 @@ const cmp = readJson<any[]>('comparisons.json', [])!;
     <h2>Metrics</h2>
     <p class="muted">Latency is wall-clock per frame, pooled over repeats. The dashed line is the sensor period. A run's hardware is in its label.</p>
 
+    <div class="notice" style="margin:12px 0"><b>Read the spread, not just the median.</b> These runs were measured on a shared development laptop (AC power, Balanced power plan, about 66 % processor performance, 1.9–2.7 GB RAM free), not an isolated benchmark host. Repeat medians of the same variant differ by up to 2.4×, and baseline medians ranged 650–890 ms across sessions. Runs are labelled with their commit; “uncommitted changes” means the working tree was dirty when the run started. Profiles and variants were measured at different times, so only differences larger than the per-repeat spread are claims. Background load was recorded only for the later runs.</div>
     {all.length === 0 && <p class="notice">No published runs.</p>}
     {pipeline.length > 0 && (
       <div class="card table-scroll"><table>
         <thead><tr><th>Run</th><th>Frames</th><th>P50</th><th>P90</th><th>P95</th><th>P99</th><th>Max</th><th>Violations</th><th>Accepted</th><th>ATE RMSE</th><th>Peak RSS</th><th>Evidence</th></tr></thead>
         <tbody>{pipeline.map((r) => (
           <tr>
-            <td><b>{r.variant}</b> · {r.profile}<br /><span class="muted">{r.dataset}</span></td>
+            <td><b>{r.variant}</b> · {r.profile}<br /><span class="muted">{r.dataset} · {r.label} · {r.commit}{r.git_dirty ? ' · uncommitted changes' : ''}</span></td>
             <td>{r.window.n_frames}</td>
             <td><Num run={r.run_id} path="latency_ms.total_ms.p50" digits={1} /> ms</td>
             <td><Num run={r.run_id} path="latency_ms.total_ms.p90" digits={1} /> ms</td>

@@ -227,6 +227,14 @@ class TestTrajectoryEvaluation(unittest.TestCase):
         # Umeyama (no scale) centres the 10 % longer line on the GT line, which spreads the error
         # symmetrically. A 1 s window still differs by ~0.1 m of the 1.0 m GT displacement.
         self.assertAlmostEqual(res["rpe"]["time_1s"]["translation_m"]["mean"], 0.10, delta=0.005)
+    def test_time_window_rpe_keeps_all_windows_with_timestamp_jitter(self):
+        # 10 Hz frames with +-0.7 ms jitter: every 1 s window has a frame within 20 ms, on either side
+        # of the target. Taking only the right-hand neighbour used to drop about half of them.
+        n = 100
+        gt, _ = self._line(0.1, n=n)
+        t = np.arange(n) * 0.1 + np.where(np.arange(n) % 2 == 0, 0.0007, -0.0007)
+        res = evaluate_trajectory(gt, t, gt, t, rpe_seconds=(1.0,))["summary"]
+        self.assertEqual(res["rpe"]["time_1s"]["translation_m"]["n"], n - 10)
     def test_rpe_rotation_drift(self):
         gt, t = self._line(0.0)                       # stationary
         est, _ = self._line(0.0, yaw_step=1.0)        # estimate spins 1 deg per frame

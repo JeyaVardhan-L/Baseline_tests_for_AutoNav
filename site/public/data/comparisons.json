@@ -8,14 +8,30 @@
       "laptop-4c": 676.2093500000001,
       "laptop-1c": 671.51435
     },
+    "p50_repeat_range_ms": {
+      "laptop-full": [
+        673.6632,
+        838.9422
+      ],
+      "laptop-4c": [
+        649.22425,
+        739.287
+      ],
+      "laptop-1c": [
+        650.40945,
+        676.41355
+      ]
+    },
     "violation_percent": {
       "laptop-full": 100.0,
       "laptop-4c": 100.0,
       "laptop-1c": 100.0
     },
     "statements": [
-      "Median latency changes by 0.90x from laptop-full to laptop-1c .",
-      "It misses the deadline on 4 laptop cores, so a Raspberry Pi 5 very likely misses it too (one-way inference)."
+      "laptop-full vs laptop-4c: per-repeat median ranges overlap (674-839 ms vs 649-739 ms); no difference is claimed.",
+      "laptop-4c vs laptop-1c: per-repeat median ranges overlap (649-739 ms vs 650-676 ms); no difference is claimed.",
+      "Profiles were measured at different times on a shared, non-isolated laptop; a non-monotonic ordering across profiles reflects machine drift as much as core count.",
+      "[ASSUMED, one-way inference, not measured] It misses the deadline on 4 laptop cores, so a Raspberry Pi 5 very likely misses it too."
     ]
   },
   {
@@ -27,14 +43,30 @@
       "laptop-4c": 437.8044,
       "laptop-1c": 779.4844
     },
+    "p50_repeat_range_ms": {
+      "laptop-full": [
+        499.43625,
+        564.70445
+      ],
+      "laptop-4c": [
+        407.44410000000005,
+        473.52515
+      ],
+      "laptop-1c": [
+        736.2736500000001,
+        825.34015
+      ]
+    },
     "violation_percent": {
       "laptop-full": 100.0,
       "laptop-4c": 100.0,
       "laptop-1c": 100.0
     },
     "statements": [
-      "Median latency changes by 1.49x from laptop-full to laptop-1c .",
-      "It misses the deadline on 4 laptop cores, so a Raspberry Pi 5 very likely misses it too (one-way inference)."
+      "laptop-4c is faster than laptop-full beyond run-to-run spread (median 438 ms vs 522 ms).",
+      "laptop-4c is faster than laptop-1c beyond run-to-run spread (median 438 ms vs 779 ms).",
+      "Profiles were measured at different times on a shared, non-isolated laptop; a non-monotonic ordering across profiles reflects machine drift as much as core count.",
+      "[ASSUMED, one-way inference, not measured] It misses the deadline on 4 laptop cores, so a Raspberry Pi 5 very likely misses it too."
     ]
   },
   {
@@ -46,14 +78,30 @@
       "laptop-4c": 611.3552999999999,
       "laptop-1c": 869.7582
     },
+    "p50_repeat_range_ms": {
+      "laptop-full": [
+        218.01565,
+        522.6693
+      ],
+      "laptop-4c": [
+        538.23555,
+        690.9234
+      ],
+      "laptop-1c": [
+        793.3747,
+        954.28205
+      ]
+    },
     "violation_percent": {
       "laptop-full": 97.24310776942356,
       "laptop-4c": 99.87468671679198,
       "laptop-1c": 99.87468671679198
     },
     "statements": [
-      "Median latency changes by 2.69x from laptop-full to laptop-1c .",
-      "It misses the deadline on 4 laptop cores, so a Raspberry Pi 5 very likely misses it too (one-way inference)."
+      "laptop-full is faster than laptop-4c beyond run-to-run spread (median 324 ms vs 611 ms).",
+      "laptop-4c is faster than laptop-1c beyond run-to-run spread (median 611 ms vs 870 ms).",
+      "Profiles were measured at different times on a shared, non-isolated laptop; a non-monotonic ordering across profiles reflects machine drift as much as core count.",
+      "[ASSUMED, one-way inference, not measured] It misses the deadline on 4 laptop cores, so a Raspberry Pi 5 very likely misses it too."
     ]
   }
 ]

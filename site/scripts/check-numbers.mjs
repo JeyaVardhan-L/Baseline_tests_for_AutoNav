@@ -21,10 +21,12 @@ for (const f of walk(dist).filter((x) => x.endsWith('.html'))) {
   }
 }
 // no private paths or secrets in the build
-const pat = [/[A-Za-z]:\\Users\\/, /drive\.google\.com/];
+const pat = [/[A-Za-z]:[\\/]+Users[\\/]/, /drive\.google\.com/, /\/home\/[a-z]/];
+const emailPat = /[\w.+-]+@[\w-]+\.[\w.-]+/;   // not applied to bundled vendor JavaScript
 for (const f of walk(dist).filter((x) => /\.(html|json|js|css|csv)$/.test(x))) {
   const t = fs.readFileSync(f, 'utf-8');
   for (const p of pat) if (p.test(t)) { console.error(`PRIVATE PATTERN ${p} in ${path.relative(dist, f)}`); bad++; }
+  if (/\.(html|json|csv)$/.test(f) && emailPat.test(t)) { console.error(`E-MAIL ADDRESS in ${path.relative(dist, f)}`); bad++; }
 }
 console.log(`checked ${checked} rendered numbers against artifacts/; ${bad} problem(s)`);
 process.exit(bad ? 1 : 0);

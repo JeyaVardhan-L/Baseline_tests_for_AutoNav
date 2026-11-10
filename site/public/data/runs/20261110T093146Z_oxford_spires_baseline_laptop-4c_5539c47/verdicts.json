@@ -41,7 +41,7 @@
       "id": "accuracy",
       "question": "How accurate was the estimated trajectory?",
       "status": "info",
-      "statement": "ATE RMSE 1.32 m (max 2.79 m) over 45.6 m of ground-truth path after rigid alignment; position RPE is reported per window in the summary. Scan-to-scan odometry has no loop closure, so error accumulates with distance.",
+      "statement": "ATE RMSE 1.32 m (max 2.79 m) over 45.6 m of ground-truth path after rigid alignment; position RPE is reported per window in the summary. Both include any unmodelled sensor-to-body offset (lever arm) between the estimate and the ground-truth body frame, so they mix drift with extrinsic bias. Scan-to-scan odometry has no loop closure, so error accumulates with distance.",
       "rule": "descriptive; no pass/fail threshold is applied to accuracy",
       "evidence": {
         "ate_rmse_m": 1.3217205014603846,
@@ -51,8 +51,8 @@
         "final_error_m": 1.2982540736844619,
         "rpe_mode": "world_position_after_umeyama_alignment",
         "rpe": {
-          "time_1s": null,
-          "time_5s": null,
+          "time_1s": 15.048729850924103,
+          "time_5s": 11.731982600999217,
           "distance_5m": 12.273713131830242,
           "distance_10m": 11.389612695757071
         }

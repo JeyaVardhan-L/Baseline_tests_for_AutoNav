@@ -245,3 +245,29 @@ def _aggregate(run_dir: Path, ds: Dict[str, Any], mode: str, repeats: int, warmu
         "deadline_ms": deadline,
     }
     return summary
+
+def reevaluate_accuracy(run_dir: Path) -> Dict[str, Any]:
+    """
+    Recompute ATE/RPE for an existing run from its stored poses and the ground truth (no benchmark is run).
+    Updates summary.json (accuracy, verdict_inputs) and accuracy_per_pose.npz.
+    """
+    run = json.loads((run_dir / "run.json").read_text(encoding="utf-8"))
+    summary = json.loads((run_dir / "summary.json").read_text(encoding="utf-8"))
+    if run["mode"] != "pipeline" or summary.get("status") != "completed":
+        return summary
+    ds = resolve_dataset(run["dataset"]["id"])
+    if not ds.get("gt") or not Path(ds["gt"]).is_file():
+        return summary
+    poses = np.load(run_dir / "repeats" / "rep0" / "poses.npy")
+    stamps = np.load(run_dir / "repeats" / "rep0" / "timestamps.npy")
+    gt_t, gt = load_pose_csv(Path(ds["gt"]))
+    ev = evaluate_trajectory(poses, stamps, gt, gt_t, rpe_seconds=(1.0, 5.0), rpe_distances_m=(5.0, 10.0))
+    summary["accuracy"] = ev["summary"]
+    np.savez_compressed(run_dir / "accuracy_per_pose.npz", **ev["per_pose"])
+    vi = summary.get("verdict_inputs", {})
+    vi["ate_rmse_m"] = ev["summary"]["ate_m"]["rmse"]
+    vi["gt_path_length_m"] = ev["summary"]["gt_path_length_m"]
+    summary["verdict_inputs"] = vi
+    summary["accuracy_reevaluated_from_stored_poses"] = True
+    (run_dir / "summary.json").write_text(json.dumps(sanitize_paths(_jsonable(summary)), indent=2), encoding="utf-8")
+    return summary
