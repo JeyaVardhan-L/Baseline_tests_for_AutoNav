@@ -1,0 +1,46 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Num from '../../components/Num.astro';
+import { runs, base } from '../../lib/data';
+const primary = runs().find((r) => r.mode === 'pipeline' && r.dataset === 'newer_college_bag9' && r.variant === 'baseline' && r.profile === 'laptop-full');
+---
+<Layout title="Algorithm" description="The implemented odometry pipeline, stage by stage.">
+  <section class="wrap section">
+    <p class="caption">C · Algorithm laboratory</p>
+    <h2>Pipeline, stage by stage</h2>
+    <div class="grid cols-2">
+      <div class="card"><h3>1 · Preprocessing</h3>
+        <p>Drop non-finite points, keep ranges 0.5–50 m, then replace every occupied 0.15 m voxel by the centroid of its points. Voxel size trades registration accuracy for speed.</p>
+        {primary && <p class="mono">points per frame: raw <Num run={primary.run_id} path="points_per_frame.points_raw.p50" digits={0} /> → valid <Num run={primary.run_id} path="points_per_frame.points_valid.p50" digits={0} /> → range <Num run={primary.run_id} path="points_per_frame.points_range.p50" digits={0} /> → voxel <Num run={primary.run_id} path="points_per_frame.points_voxel.p50" digits={0} /> (median, <span class="evidence">MEASURED</span>)</p>}
+      </div>
+      <div class="card"><h3>2 · ICP registration</h3>
+        <p>Scan k is matched to scan k−1. Each iteration finds the nearest target point for every source point (k-d tree), keeps matches within 1.5 m, and solves for the rigid transform by SVD (Kabsch). It stops when the update is below 1e-4 m or after 30 iterations.</p>
+        <p class="mono">minimise Σ ‖q<sub>i</sub> − (R p<sub>i</sub> + t)‖² · variant p2plane: Σ ((R p<sub>i</sub> + t − q<sub>i</sub>)·n<sub>i</sub>)²</p>
+      </div>
+      <div class="card"><h3>3 · Validity gate</h3>
+        <p>An ICP result only counts if it passes four checks. Thresholds were fixed from sensor physics before comparing with ground truth, and rejections are counted by reason.</p>
+        {primary ? <table><tbody>
+          <tr><th>inlier ratio ≥</th><td><Num run={primary.run_id} file="run.json" path="registration_gate.min_inlier_ratio" digits={2} /></td></tr>
+          <tr><th>mean residual ≤ (m)</th><td><Num run={primary.run_id} file="run.json" path="registration_gate.max_mean_residual_m" digits={2} /></td></tr>
+          <tr><th>step translation ≤ (m)</th><td><Num run={primary.run_id} file="run.json" path="registration_gate.max_step_translation_m" digits={1} /></td></tr>
+          <tr><th>step rotation ≤ (°)</th><td><Num run={primary.run_id} file="run.json" path="registration_gate.max_step_rotation_deg" digits={0} /></td></tr>
+        </tbody></table> : <p class="muted">Available once a run is published.</p>}
+      </div>
+      <div class="card"><h3>4 · Trajectory and frames</h3>
+        <p>ICP returns <span class="mono">T</span>, which maps scan k into scan k−1. The sensor pose accumulates as <span class="mono">W<sub>k</sub> = W<sub>k−1</sub> · T</span>. Using the inverse instead would mirror the trajectory; an earlier version did, and tests now compare against hand-derived poses.</p>
+      </div>
+      <div class="card"><h3>5 · Evaluation</h3>
+        <p>Poses are matched to ground truth by timestamp (within 20 ms). ATE is the position error after a rigid Umeyama alignment. RPE is the position error over fixed time or path-length windows.</p>
+        <p class="notice">The ground-truth body frame differs from the sensor frame (a ~141° yaw was observed), so rotation RPE is <b>UNAVAILABLE</b> and RPE uses world-frame positions. See decision DEC-012 in the repository.</p>
+      </div>
+      <div class="card"><h3>6 · Variants</h3>
+        <ul style="padding-left:18px;margin:0">
+          <li><b>baseline</b>: the algorithm above.</li>
+          <li><b>optimized</b>: same algorithm, faster implementation (packed-key voxel filter, cached tree, parallel queries).</li>
+          <li><b>p2plane</b>: point-to-plane ICP with a constant-velocity initial guess; preprocessing identical to baseline.</li>
+        </ul>
+      </div>
+    </div>
+    <p style="margin-top:16px"><a href={base + 'viewer/'}>See these stages on real point clouds →</a></p>
+  </section>
+</Layout>

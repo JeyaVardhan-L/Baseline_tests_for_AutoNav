@@ -146,3 +146,51 @@ All significant design and engineering decisions are recorded here with context,
 | **Status** | ACCEPTED |
 | **Evidence** | `cloud_<sec>_<nsec>` has an unpadded nsec field; lexicographic sort scrambled the 271 extracted frames (dt min -0.50 s). The earlier sparse sets hid this because few frames shared a second. |
 | **Decision** | `scan_sort_key` sorts by (sec, nsec); the adapter and `tools/validate_window.py` use it. Extracted names keep the dataset's unpadded convention. Regression tests added. |
+
+## DEC-014 — Oxford Spires as the secondary dataset; licence and sensor caveats
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-11-10 |
+| **Status** | ACCEPTED |
+| **Decision** | Use one sequence (`2024-03-13-observatory-quarter-01`, outdoor, 2,894 clouds at 10 Hz with no gap above 0.15 s) and a 300-frame window chosen by a fixed rule: the consecutive window with the largest ground-truth path length. `tools/fetch_spires.py` reads the remote zip with HTTP range requests, so only the window (~240 MB) is downloaded, not the 2.1 GB archive. |
+| **Licence (verified)** | CC BY-NC-SA 4.0 on both the Hugging Face dataset card and the project page. Non-commercial research use with attribution is allowed, so results and heavily decimated excerpts may be published with attribution. No raw redistribution. |
+| **Sensor** | Hesai QT64: 64 channels, 10 Hz, ~104 deg vertical field of view, 60 m range (project page). The OS1-64 has a 360 deg horizontal field of view. Every Spires result is labelled as a different sensor and never read as an OS1-64 result. |
+| **Ground truth** | Centimetre-level poses from registering the LiDAR to a Leica RTC360 map; each pose is the BASE frame in the world frame (not the LiDAR frame), so position-only RPE (DEC-012) is used. |
+| **Format notes** | PCD headers use `COUNT 4` / `COUNT 14` padding fields named `_`; the loader now honours COUNT and skips padding (test added). |
+
+## DEC-015 — Variant definitions
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-11-10 |
+| **Status** | ACCEPTED |
+| **baseline** | Current algorithm after the Phase 0 bug fixes. Never replaced. |
+| **optimized** | Same algorithm and same gate; implementation speedups only (packed-key voxel filter, one-pass validity/range mask, cached KD-tree, multi-worker queries over the CPUs the process may use). Must match baseline accuracy within tolerance. |
+| **p2plane** | Point-to-plane ICP (PCA normals, k=10) with a constant-velocity initial guess. Preprocessing is deliberately identical to baseline, so differences in `register_ms` come from the registration algorithm rather than implementation tuning. Normal estimation is inside the measured registration cost. |
+| **Alternative** | p2plane on top of the optimized preprocessing. Rejected for the primary comparison because it mixes two effects; stage timings let readers combine them. |
+
+## DEC-016 — ARM cloud job uses Spires, not Newer College
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-11-10 |
+| **Status** | ACCEPTED |
+| **Decision** | The `arm-benchmark` workflow fetches a Spires window from Hugging Face inside the runner. Newer College data is not redistributable and its download link is private, so it cannot be used in CI without a repository secret (an account action). The workflow only runs after the owner pushes; no ARM results exist yet. |
+
+## DEC-017 — `intel.clf` licence: unresolved
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-11-10 |
+| **Status** | OPEN (owner/teammate to confirm) |
+| **Finding** | The Radish repository states a Creative Commons licence without naming the version (and asks users to cite the repository and the data provider). An MIT DSpace mirror lists an `intel_lab` dataset under CC0 1.0, but that entry describes the Intel Lab in Hillsboro, Oregon, not the Seattle log in `intel.clf`. The teammate's README already says a per-recording licence was not verified. |
+| **Action taken** | None to the file (it is the teammate's, untouched, not featured on the site). Recommendation: confirm the licence before the repository is made more prominent, or fetch the file at setup time instead of tracking 16 MB of it. |
+
+## DEC-018 — Lab server design
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-11-10 |
+| **Status** | ACCEPTED |
+| **Decision** | `autonav lab` runs a stdlib `http.server` on 127.0.0.1. It validates inputs against allow-lists, passes arguments as a list (no shell), runs one job at a time (concurrent runs would corrupt timings) and contains no algorithm logic: it spawns the same `autonav run` CLI and serves artifacts. |

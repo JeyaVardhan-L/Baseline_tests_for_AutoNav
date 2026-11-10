@@ -1,0 +1,37 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { MODE } from '../../lib/data';
+---
+<Layout title="Lab" description="Launch and compare runs locally.">
+  <section class="wrap section">
+    <p class="caption">Lab</p>
+    <h2>Lab</h2>
+    {MODE !== 'lab' ? (
+      <p class="notice">The Lab is available only locally: <code>autonav lab</code>. This static site is read-only and has no run controls.</p>
+    ) : (
+      <div id="lab">
+        <div class="card">
+          <h3>New run</h3>
+          <div class="grid cols-3">
+            <div><label class="caption" for="f-dataset">Dataset</label><br /><select id="f-dataset" style="width:100%"></select></div>
+            <div><label class="caption" for="f-window">Window (a:b, first:N, all)</label><br /><input id="f-window" type="text" style="width:100%" placeholder="dataset default" /></div>
+            <div><label class="caption" for="f-variant">Variant</label><br /><select id="f-variant" style="width:100%"></select></div>
+            <div><label class="caption" for="f-profile">Profile</label><br /><select id="f-profile" style="width:100%"></select></div>
+            <div><label class="caption" for="f-repeats">Repeats</label><br /><input id="f-repeats" type="number" value="3" min="1" max="10" style="width:100%" /></div>
+            <div><label class="caption" for="f-mode">Mode</label><br /><select id="f-mode" style="width:100%"><option value="pipeline">pipeline</option><option value="single-frame">single-frame (non-consecutive data)</option></select></div>
+          </div>
+          <p id="f-claim" class="muted" style="margin-top:8px"></p>
+          <button id="f-run" type="button">Run</button>
+          <p id="f-status" role="status" class="muted" style="margin-top:8px"></p>
+        </div>
+        <div class="card" style="margin-top:16px"><h3>Run history</h3>
+          <p class="muted">Select 2–3 runs to compare. “Publish” adds a run to <span class="mono">artifacts/published.json</span>.</p>
+          <div class="table-scroll"><table id="history"><thead><tr><th></th><th>Run</th><th>P50</th><th>P95</th><th>P99</th><th>Violations</th><th>ATE</th><th>Published</th></tr></thead><tbody></tbody></table></div>
+          <button id="compare" class="outline" type="button" style="margin-top:8px">Compare selected</button>
+          <div id="compare-out" style="margin-top:12px"></div>
+        </div>
+      </div>
+    )}
+  </section>
+  {MODE === 'lab' && <script>import '../../scripts/lab.ts';</script>}
+</Layout>

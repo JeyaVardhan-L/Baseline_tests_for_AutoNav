@@ -56,6 +56,29 @@ class TestPcdHeaderIsAuthoritative(unittest.TestCase):
                 parse_pcd_file(f)
 
 
+class TestPcdCountAndPadding(unittest.TestCase):
+    def test_hesai_style_header_with_padding_fields(self):
+        # Header layout of the Oxford Spires clouds: padding fields "_" with COUNT 4 / 14.
+        header = (
+            "# .PCD v0.7\nVERSION 0.7\nFIELDS x y z _ intensity _ timestamp ring _\n"
+            "SIZE 4 4 4 1 4 1 8 2 1\nTYPE F F F U F U F U U\nCOUNT 1 1 1 4 1 4 1 1 14\n"
+            "WIDTH 3\nHEIGHT 1\nVIEWPOINT 0 0 0 1 0 0 0\nPOINTS 3\nDATA binary\n"
+        ).encode("ascii")
+        step = 4 + 4 + 4 + 4 + 4 + 4 + 8 + 2 + 14   # x y z pad4 intensity pad4 timestamp ring pad14 = 48
+        buf = bytearray()
+        for i in range(3):
+            rec = bytearray(step)
+            rec[0:12] = np.array([1.0 + i, 2.0, 3.0], dtype="<f4").tobytes()
+            rec[16:20] = np.array([10.0 * (i + 1)], dtype="<f4").tobytes()
+            buf += rec
+        with tempfile.TemporaryDirectory() as d:
+            f = Path(d) / "hesai.pcd"
+            f.write_bytes(header + bytes(buf))
+            xyz, inten, meta = parse_pcd_file(f)
+            self.assertEqual(xyz.shape, (3, 3))
+            self.assertTrue(np.allclose(xyz[:, 0], [1.0, 2.0, 3.0]))
+            self.assertTrue(np.allclose(inten, [10.0, 20.0, 30.0]))
+
 class TestRosStyleFilenames(unittest.TestCase):
     def test_sec_nsec_filenames_are_timestamps(self):
         with tempfile.TemporaryDirectory() as d:

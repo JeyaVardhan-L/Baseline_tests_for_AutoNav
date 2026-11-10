@@ -1,0 +1,33 @@
+name: arm-benchmark
+
+# Measures the baseline pipeline on a real ARM server-class cloud VM (NOT a Raspberry Pi).
+# Manual trigger only. Uses an Oxford Spires window fetched from Hugging Face inside the runner
+# (CC BY-NC-SA 4.0, not redistributed). Timings are noisy (shared VM): the harness repeats runs and
+# records the CPU model so the hardware is always identified.
+on:
+  workflow_dispatch:
+    inputs:
+      repeats:
+        description: "Whole-run repeats"
+        default: "5"
+
+jobs:
+  arm-cloud:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install (core + data extra)
+        run: python -m pip install -e . huggingface_hub
+      - name: Runs on ARM check (unit tests; timings are not collected here)
+        run: python -B -m unittest discover -s tests
+      - name: Fetch a 300-frame Oxford Spires window
+        run: python tools/fetch_spires.py --frames 300 --out datasets/oxford-spires/window
+      - name: Measure
+        run: python -m autonav_baseline run --dataset oxford_spires --variant baseline --profile arm-cloud --repeats ${{ github.event.inputs.repeats }} --label arm-cloud-ci
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arm-cloud-runs
+          path: artifacts/runs/

@@ -1,0 +1,40 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { readJson, runs, base } from '../../lib/data';
+const all = runs();
+const info = all.map((r) => ({ r, run: readJson<any>(`runs/${r.run_id}/run.json`)! }));
+---
+<Layout title="Reproduce" description="Install, dataset setup, commands and run records.">
+  <section class="wrap section">
+    <p class="caption">F · Reproducibility centre</p>
+    <h2>Reproduce a result</h2>
+    <ol style="padding-left:18px;max-width:80ch">
+      <li>Clone the repository and install: <code>python -m venv .venv</code>, activate, <code>pip install -e .</code>; add <code>pip install -e ".[data]"</code> only to fetch data.</li>
+      <li>Check the install: <code>python -B -m unittest discover -s tests -v</code>.</li>
+      <li>Obtain the permitted datasets (see the repository's <span class="mono">docs/datasets.md</span>). Newer College access comes from the Oxford Robotics Institute; Oxford Spires is public on Hugging Face (<code>python tools/fetch_spires.py</code>).</li>
+      <li>Point the harness at your copy through a git-ignored <span class="mono">config.local.yaml</span> (<span class="mono">dataset_roots</span>), or use the default folders.</li>
+      <li>Run an experiment, e.g. <code>autonav run --dataset newer_college_bag9 --variant baseline --profile laptop-full --repeats 3</code>.</li>
+      <li>Compare against the records below. Latency varies with the CPU, clocks, background load and library versions; expect the same shape and ordering, not identical milliseconds. Poses and accuracy are deterministic.</li>
+    </ol>
+    <h3 style="margin-top:32px">Published run records</h3>
+    {info.length === 0 && <p class="notice">No published runs.</p>}
+    <div class="grid cols-2">
+      {info.map(({ r, run }) => (
+        <div class="card">
+          <div class="caption">{r.run_id}</div>
+          <table><tbody>
+            <tr><th>Command</th><td class="mono">{run.command}</td></tr>
+            <tr><th>Commit</th><td class="mono">{r.commit}{r.git_dirty ? ' (working tree had uncommitted changes)' : ''}</td></tr>
+            <tr><th>Window</th><td>frames {r.window.start}–{r.window.stop} of {r.window.of_total}</td></tr>
+            <tr><th>Hardware</th><td>{run.environment.cpu_model}, {run.environment.cpu_cores_physical} cores / {run.environment.cpu_cores_logical} threads, {run.environment.ram_total_gb} GB; affinity {JSON.stringify(run.environment.cpu_affinity_effective)}</td></tr>
+            <tr><th>Software</th><td>{run.environment.os}; Python {run.environment.python}; NumPy {run.environment.numpy}; SciPy {run.environment.scipy}</td></tr>
+            <tr><th>Threads</th><td class="mono">{JSON.stringify(run.environment.thread_env)}</td></tr>
+            <tr><th>Method</th><td>{run.methodology.repeats} repeats, {run.methodology.warmup_frames_excluded} warm-up frames excluded, initial frame excluded, percentile: {run.methodology.percentile_method}</td></tr>
+            <tr><th>Parameters</th><td class="mono">{JSON.stringify(run.parameters)}</td></tr>
+            <tr><th>Artifacts</th><td>{['run.json', 'summary.json', 'verdicts.json', 'frames.csv'].map((f) => <a href={`${base}data/runs/${r.run_id}/${f}`} style="margin-right:8px">{f}</a>)}</td></tr>
+          </tbody></table>
+        </div>
+      ))}
+    </div>
+  </section>
+</Layout>

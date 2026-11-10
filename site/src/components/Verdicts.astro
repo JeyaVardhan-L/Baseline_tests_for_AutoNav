@@ -1,0 +1,20 @@
+---
+import { verdicts } from '../lib/data';
+const { run } = Astro.props;
+const v = verdicts(run);
+---
+{v && (
+  <div class="grid">
+    {v.verdicts.map((x: any) => (
+      <div class="card">
+        <div class="caption">{x.question}</div>
+        <p class={'status ' + x.status} style="margin:6px 0">{x.status.toUpperCase()}</p>
+        <p>{x.statement}</p>
+        <details><summary class="muted">Rule and evidence</summary>
+          <p class="mono">{x.rule}</p>
+          <pre>{JSON.stringify(x.evidence, null, 2)}</pre>
+        </details>
+      </div>
+    ))}
+  </div>
+)}

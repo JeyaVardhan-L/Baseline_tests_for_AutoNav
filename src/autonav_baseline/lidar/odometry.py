@@ -154,6 +154,7 @@ def icp_point_to_point(
     initial_transform: Optional[np.ndarray] = None,
     min_inliers: int = 20,
     target_tree: Optional[cKDTree] = None,
+    workers: int = 1,
 ) -> ICPResult:
     """
     Point-to-point ICP using NumPy and SciPy cKDTree.
@@ -167,6 +168,7 @@ def icp_point_to_point(
         initial_transform: optional 4x4 initial guess for T (source -> target).
         min_inliers: fewer matched points than this aborts the registration.
         target_tree: optional pre-built KD-tree of target_points (avoids rebuilding).
+        workers: threads used by KD-tree queries (1 = single-threaded; baseline).
 
     Returns:
         ICPResult. `transformation` maps source points into the target frame.
@@ -205,7 +207,7 @@ def icp_point_to_point(
         iterations_run = it + 1
 
         transformed_src = src_pts @ r_accum.T + t_accum
-        distances, indices = tree.query(transformed_src, k=1, workers=1)
+        distances, indices = tree.query(transformed_src, k=1, workers=workers)
 
         inlier_mask = distances <= max_correspondence_distance
         num_inliers = int(np.count_nonzero(inlier_mask))

@@ -23,7 +23,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 from autonav_baseline.datasets.groundtruth import load_pose_csv                # noqa: E402
-from autonav_baseline.datasets.io import scan_sort_key                          # noqa: E402
+from autonav_baseline.datasets.io import scan_sort_key, scan_timestamp_from_name        # noqa: E402
 from autonav_baseline.metrics.trajectory_evaluation import associate_by_time   # noqa: E402
 
 _NAME = re.compile(r"cloud_(\d+)_(\d+)\.pcd$")
@@ -32,8 +32,7 @@ _NAME = re.compile(r"cloud_(\d+)_(\d+)\.pcd$")
 def validate(frames_dir: Path, gt_csv: Path, period: float, max_dt: float, moving_speed: float):
     by_name = sorted(frames_dir.glob("*.pcd"))
     files = sorted(by_name, key=scan_sort_key)
-    ts = np.array([int(m.group(1)) + int(m.group(2)) * 1e-9
-                   for m in (_NAME.match(f.name) for f in files) if m])
+    ts = np.array([t for t in (scan_timestamp_from_name(f) for f in files) if t is not None])
     report = {"frames_dir": frames_dir.name, "n_frames": int(len(files)), "nominal_period_s": period,
               "filename_order_is_chronological": by_name == files}
     if len(ts) != len(files) or len(ts) < 3:

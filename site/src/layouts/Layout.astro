@@ -1,0 +1,36 @@
+---
+import '@fontsource-variable/geist';
+import '../styles/global.css';
+import { MODE, base } from '../lib/data';
+const { title, description = '' } = Astro.props;
+const nav = [
+  ['A', 'Overview', ''], ['B', 'Datasets', 'datasets/'], ['C', 'Algorithm', 'algorithm/'], ['D', '3D viewer', 'viewer/'],
+  ['E', 'Metrics', 'metrics/'], ['F', 'Reproduce', 'reproduce/'], ['G', 'Hardware', 'hardware/'],
+];
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} · AutoNav</title>
+    <meta name="description" content={description} />
+  </head>
+  <body>
+    <header style="background:var(--color-surface-alt);border-bottom:1px solid var(--color-hairline)">
+      <div class="wrap" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding-top:12px;padding-bottom:12px">
+        <a href={base} style="font-weight:600;text-decoration:none">AutoNav</a>
+        <span class="badge outline">{MODE === 'lab' ? 'Lab mode (local)' : 'Showcase (static, read-only)'}</span>
+        <nav aria-label="Sections" style="display:flex;flex-wrap:wrap;gap:4px;margin-left:auto">
+          {nav.map(([k, label, href]) => <a class="badge" style="text-decoration:none" href={base + href}>{k} · {label}</a>)}
+          {MODE === 'lab' && <a class="badge solid" style="text-decoration:none" href={base + 'lab/'}>Lab</a>}
+        </nav>
+      </div>
+    </header>
+    <main><slot /></main>
+    <footer class="wrap section muted" style="font-size:12px">
+      <p>A measurement study, not a navigation system. Every result names the hardware it ran on.</p>
+      <p>Data: Newer College Dataset (Ramezani et al., IROS 2020) and Oxford Spires (Tao et al., 2025), both CC BY-NC-SA 4.0; point-cloud views are heavily decimated excerpts for illustration. Code: MIT.</p>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,70 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Num from '../../components/Num.astro';
+import Verdicts from '../../components/Verdicts.astro';
+import { MODE, base, readJson, runs } from '../../lib/data';
+const all = runs();
+const defs = readJson<any[]>('metrics.json', [])!;
+const pipeline = all.filter((r) => r.mode === 'pipeline');
+const single = all.filter((r) => r.mode === 'single-frame');
+const cmp = readJson<any[]>('comparisons.json', [])!;
+---
+<Layout title="Metrics" description="Every published metric with definitions, charts and verdicts.">
+  <section class="wrap section">
+    <p class="caption">E · Benchmark and metrics explorer</p>
+    <h2>Metrics</h2>
+    <p class="muted">Latency is wall-clock per frame, pooled over repeats. The dashed line is the sensor period. A run's hardware is in its label.</p>
+
+    {all.length === 0 && <p class="notice">No published runs.</p>}
+    {pipeline.length > 0 && (
+      <div class="card table-scroll"><table>
+        <thead><tr><th>Run</th><th>Frames</th><th>P50</th><th>P90</th><th>P95</th><th>P99</th><th>Max</th><th>Violations</th><th>Accepted</th><th>ATE RMSE</th><th>Peak RSS</th><th>Evidence</th></tr></thead>
+        <tbody>{pipeline.map((r) => (
+          <tr>
+            <td><b>{r.variant}</b> · {r.profile}<br /><span class="muted">{r.dataset}</span></td>
+            <td>{r.window.n_frames}</td>
+            <td><Num run={r.run_id} path="latency_ms.total_ms.p50" digits={1} /> ms</td>
+            <td><Num run={r.run_id} path="latency_ms.total_ms.p90" digits={1} /> ms</td>
+            <td><Num run={r.run_id} path="latency_ms.total_ms.p95" digits={1} /> ms</td>
+            <td><Num run={r.run_id} path="latency_ms.total_ms.p99" digits={1} /> ms</td>
+            <td><Num run={r.run_id} path="latency_ms.total_ms.max" digits={1} /> ms</td>
+            <td><Num run={r.run_id} path="deadline.pipeline_total_ms.violation_percent" digits={1} /> %</td>
+            <td><Num run={r.run_id} path="registration.accepted_percent" digits={1} /> %</td>
+            <td><Num run={r.run_id} path="accuracy.ate_m.rmse" digits={2} /> m</td>
+            <td><Num run={r.run_id} path="peak_rss_mb.median" digits={0} /> MB</td>
+            <td><span class="badge outline">{r.evidence}</span></td>
+          </tr>))}</tbody>
+      </table></div>
+    )}
+    {single.length > 0 && (
+      <div class="card" style="margin-top:16px"><h3>Single-frame preprocessing (NON-CONSECUTIVE frames)</h3>
+        {single.map((r) => <p>Median <Num run={r.run_id} path="latency_ms.total_ms.p50" digits={0} /> ms, P95 <Num run={r.run_id} path="latency_ms.total_ms.p95" digits={0} /> ms per frame for invalid-point removal, range filter and voxel downsample; voxel stage alone <Num run={r.run_id} path="latency_ms.voxel_ms.p50" digits={0} /> ms; <Num run={r.run_id} path="points.points_voxel.p50" digits={0} /> points after voxel filter (median). No odometry or accuracy claim.</p>)}
+      </div>
+    )}
+
+    <div id="charts" data-base={base} data-mode={MODE} style="margin-top:24px">
+      <label class="caption" for="run">Run for per-frame charts</label><br /><select id="run"></select>
+      <div class="grid cols-2" style="margin-top:12px">
+        <div class="card"><div id="c-frames" style="height:340px" role="img" aria-label="Per-frame latency chart"></div></div>
+        <div class="card"><div id="c-hist" style="height:340px" role="img" aria-label="Latency histogram"></div></div>
+        <div class="card"><div id="c-compare" style="height:340px" role="img" aria-label="Latency percentiles by run"></div></div>
+        <div class="card"><div id="c-viol" style="height:340px" role="img" aria-label="Deadline violation rate by run"></div></div>
+        <div class="card"><div id="c-icp" style="height:340px" role="img" aria-label="ICP iterations and inlier ratio"></div></div>
+        <div class="card"><div id="c-ate" style="height:340px" role="img" aria-label="Position error over time"></div></div>
+      </div>
+    </div>
+
+    {cmp.length > 0 && <div class="card" style="margin-top:16px"><h3>Scaling across hardware profiles</h3>{cmp.map((c) => <><p class="caption">{c.dataset} · {c.variant}</p><ul style="padding-left:18px">{c.statements.map((s: string) => <li>{s}</li>)}</ul></>)}</div>}
+
+    <h3 style="margin-top:32px">Verdicts</h3>
+    {pipeline.map((r) => <div style="margin-top:12px"><p class="caption">{r.variant} · {r.profile} · {r.dataset}</p><Verdicts run={r.run_id} /></div>)}
+    {single.map((r) => <div style="margin-top:12px"><p class="caption">single-frame · {r.dataset}</p><Verdicts run={r.run_id} /></div>)}
+
+    <h3 style="margin-top:32px">Metric definitions</h3>
+    <div class="card table-scroll"><table>
+      <thead><tr><th>Metric</th><th>Unit</th><th>Evidence</th><th>Definition</th><th>Calculation</th><th>Interpretation</th></tr></thead>
+      <tbody>{defs.map((d) => <tr><td><b>{d.name}</b></td><td>{d.unit}</td><td><span class="evidence">{d.evidence}</span></td><td>{d.definition}</td><td>{d.calculation}</td><td>{d.interpretation}</td></tr>)}</tbody>
+    </table></div>
+  </section>
+  <script>import '../../scripts/charts.ts';</script>
+</Layout>

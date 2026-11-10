@@ -21,7 +21,11 @@ dependencies = [
     "pandas>=2.0",
 ]
 
+[project.scripts]
+autonav = "autonav_baseline.cli:main"
+
 [project.optional-dependencies]
+data = ["rosbags>=0.9", "gdown>=5", "huggingface_hub>=0.20"]
 viz = [
     "open3d>=0.17",
 ]

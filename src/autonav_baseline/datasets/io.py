@@ -11,17 +11,36 @@ import numpy as np
 
 
 _ROS_NAME = re.compile(r"^(?:[A-Za-z][A-Za-z0-9]*_)?(\d{9,10})_(\d{1,9})\.[A-Za-z]+$")
+_FLOAT_NAME = re.compile(r"^(?:[A-Za-z][A-Za-z0-9]*_)?(\d{9,10})\.(\d{1,9})\.[A-Za-z]+$")
+
+
+def _name_sec_nsec(path: Path):
+    """(sec, nsec) from `cloud_<sec>_<nsec>.pcd` or `<sec>.<nsec>.pcd`, else None. nsec is an integer."""
+    name = Path(path).name
+    m = _ROS_NAME.match(name)
+    if m:
+        return int(m.group(1)), int(m.group(2))
+    m = _FLOAT_NAME.match(name)
+    if m:
+        return int(m.group(1)), int(m.group(2).ljust(9, "0")[:9])
+    return None
+
+
+def scan_timestamp_from_name(path: Path) -> Optional[float]:
+    """Timestamp in seconds encoded in a scan filename, or None."""
+    sn = _name_sec_nsec(path)
+    return None if sn is None else sn[0] + sn[1] * 1e-9
 
 
 def scan_sort_key(path: Path):
     """
     Chronological sort key for scan files. ROS-style names `cloud_<sec>_<nsec>.pcd` carry an UNPADDED
     nanosecond field, so lexicographic order is wrong within a second (e.g. `_59876608` sorts after
-    `_157463040`). Files with such names sort by (sec, nsec); everything else sorts by name.
+    `_157463040`). Files with parseable timestamp names sort by (sec, nsec); everything else by name.
     """
-    m = _ROS_NAME.match(Path(path).name)
-    if m:
-        return (0, int(m.group(1)), int(m.group(2)), "")
+    sn = _name_sec_nsec(path)
+    if sn is not None:
+        return (0, sn[0], sn[1], "")
     return (1, 0, 0, Path(path).name)
 
 def parse_pcd_file(fpath: Path) -> Tuple[np.ndarray, Optional[np.ndarray], Dict[str, Any]]:
@@ -92,12 +111,17 @@ def parse_pcd_file(fpath: Path) -> Tuple[np.ndarray, Optional[np.ndarray], Dict[
             )
         # Compute binary struct offset for x, y, z
         type_map = {"F": "f", "I": "i", "U": "u"}
-        dtype_fields = []
-        for fld, sz, tp in zip(fields, sizes, types):
-            np_type = f"{type_map.get(tp, 'f')}{sz}"
-            dtype_fields.append((fld, np_type))
-
-        pcd_dtype = np.dtype(dtype_fields)
+        counts = [int(c) for c in header_meta.get("COUNT", "").split()] or [1] * len(fields)
+        names, formats, offsets = [], [], []
+        offset = 0
+        for fld, sz, tp, cnt in zip(fields, sizes, types, counts):
+            # Fields named "_" are padding (PCL convention); they advance the offset but are not read.
+            if fld != "_" and cnt == 1:
+                names.append(fld)
+                formats.append(f"<{type_map.get(tp, 'f')}{sz}")
+                offsets.append(offset)
+            offset += sz * cnt
+        pcd_dtype = np.dtype({"names": names, "formats": formats, "offsets": offsets, "itemsize": offset})
         record_size = pcd_dtype.itemsize
         payload_bytes = fpath.stat().st_size - header_byte_offset
         available_records = payload_bytes // record_size

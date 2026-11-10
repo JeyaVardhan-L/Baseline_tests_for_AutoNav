@@ -1,0 +1,31 @@
+/* Single source of truth for colour. Frosted-paper / clinical-blueprint design reference:
+   monochrome UI; colour appears only in data visualisation and status. Red means FAIL only. */
+:root {
+  --color-canvas: #f5f5f5;
+  --color-paper: #ffffff;
+  --color-surface-alt: #fafafa;
+  --color-ink: #0a0a0a;
+  --color-ink-soft: #171717;
+  --color-mid-gray: #737373;
+  --color-hairline: #e5e5e5;
+
+  /* data-visualisation palette (fixed; never reused for decoration) */
+  --viz-source: #2563eb;      /* source cloud */
+  --viz-target: #ea580c;      /* target cloud */
+  --viz-estimate: #7c3aed;    /* estimated trajectory */
+  --viz-truth: #0a0a0a;       /* ground-truth trajectory */
+  /* benchmark comparison series (charts only) */
+  --bench-1: #404040; --bench-2: #0e7490; --bench-3: #6d28d9; --bench-4: #a3a3a3;
+  --status-pass: #15803d;
+  --status-warn: #a16207;
+  --status-fail: #e7000b;     /* red = fail only */
+
+  --font-geist: 'Geist Variable', 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  --radius-card: 24px;
+  --radius-control: 18px;
+  --radius-nested: 10px;
+  --shadow-card: 0 0 0 1px rgba(23,23,23,0.05), 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px -1px rgba(0,0,0,0.1);
+  --page-max: 1280px;
+}

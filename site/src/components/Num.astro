@@ -1,0 +1,9 @@
+---
+// A number rendered from an artifact. data-* attributes let `npm run check:numbers` verify it against artifacts/.
+import { readJson } from '../lib/data';
+const { run, file = 'summary.json', path, digits = 1, unit = '' } = Astro.props;
+let value: any = readJson(`runs/${run}/${file}`);
+for (const key of String(path).split('.')) value = value == null ? null : value[key];
+const text = typeof value === 'number' ? value.toFixed(digits) : (value == null ? 'UNAVAILABLE' : String(value));
+---
+<span class="num" data-run={run} data-file={file} data-path={path} data-digits={digits}>{text}</span>{unit && text !== 'UNAVAILABLE' ? ' ' + unit : ''}

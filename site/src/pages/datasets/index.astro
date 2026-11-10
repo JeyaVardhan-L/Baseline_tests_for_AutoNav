@@ -1,0 +1,42 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { readJson, runs, base } from '../../lib/data';
+const ds = readJson<Record<string, any>>('datasets.json', {})!;
+const all = runs();
+const facts: Record<string, { gt: string; format: string; provenance: string; why: string }> = {
+  newer_college_bag9: { gt: 'Yes: registered_poses.csv, 10 Hz, pose of the ground-truth body frame (differs from the sensor frame; see C).', format: 'ROS1 bag → PCD (x y z intensity t reflectivity ring noise range)', provenance: 'Oxford Robotics Institute, access granted by email; recording rooster_2020-03-10-11-01-34_9 extracted with tools/extract_bag.py', why: 'Same sensor class as the target (Ouster OS1-64, 10 Hz). Consecutive frames with ground truth. Only 27 s long.' },
+  newer_college_sparse: { gt: 'Not used', format: 'PCD', provenance: 'Same sequence, raw PCD release: an 11.3 % thinned sample (median gap 0.6 s, longest consecutive run 4 frames)', why: 'Not consecutive, so never used for odometry. Used only for single-frame preprocessing timing and point counts.' },
+  oxford_spires: { gt: 'Yes: centimetre-level poses (LiDAR registered to a survey map), pose of the base frame', format: 'PCD (x y z intensity timestamp ring, padded)', provenance: 'Oxford Robotics Institute via Hugging Face (observatory-quarter-01), 300-frame window picked by a fixed rule', why: 'Long continuous walking sequence. Different sensor (Hesai QT64, ~104° vertical field of view): comparisons must say so.' },
+};
+---
+<Layout title="Datasets" description="Datasets used or evaluated, with provenance, licence and sensor details.">
+  <section class="wrap section">
+    <p class="caption">B · Dataset laboratory</p>
+    <h2>Datasets</h2>
+    <p class="muted">Raw data is not redistributed here. Point-cloud views elsewhere on this site are heavily decimated excerpts with attribution.</p>
+    <div class="grid cols-2" style="margin-top:16px">
+      {Object.entries(ds).map(([id, d]: [string, any]) => {
+        const f = facts[id]; const used = all.filter((r) => r.dataset === id);
+        return (
+          <div class="card">
+            <div class="caption">{id}</div>
+            <h3>{d.sequence}</h3>
+            <p><span class="badge solid">{d.evidence}</span> <span class="badge outline">{d.consecutive ? 'consecutive' : 'NON-CONSECUTIVE'}</span> {!d.same_sensor_as_target && <span class="badge outline">different sensor</span>}</p>
+            <table><tbody>
+              <tr><th>Sensor</th><td>{d.sensor}</td></tr>
+              <tr><th>Licence</th><td>{d.licence}</td></tr>
+              {f && <><tr><th>Ground truth</th><td>{f.gt}</td></tr><tr><th>Format</th><td>{f.format}</td></tr><tr><th>Provenance</th><td>{f.provenance}</td></tr><tr><th>Why it is here</th><td>{f.why}</td></tr></>}
+              <tr><th>Experiments</th><td>{used.length ? used.map((r) => <div><a class="mono" href={base + 'metrics/'}>{r.variant} · {r.profile}</a> · frames {r.window.start}–{r.window.stop} ({r.window.n_frames})</div>) : 'none published yet'}</td></tr>
+            </tbody></table>
+          </div>
+        );
+      })}
+    </div>
+    <h3 style="margin-top:32px">Evaluated, not used</h3>
+    <div class="card alt"><ul style="padding-left:18px;margin:0">
+      <li><b>KITTI</b>: adapter kept (Velodyne HDL-64E, automotive). No run published; any use must state the sensor difference.</li>
+      <li><b>Hilti, OpenLORIS, TUM RGB-D</b>: adapters were inspect-only or have no LiDAR, so they were moved to <span class="mono">archive/</span>.</li>
+      <li><b>MulRan</b>: not evaluated.</li>
+    </ul></div>
+  </section>
+</Layout>

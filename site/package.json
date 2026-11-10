@@ -1,0 +1,26 @@
+{
+  "name": "autonav-site",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "export-data": "python ../tools/export_site_data.py",
+    "dev": "astro dev",
+    "build": "astro build",
+    "build:lab": "cross-env PUBLIC_MODE=lab astro build",
+    "check": "astro check",
+    "check:numbers": "node scripts/check-numbers.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/geist": "^5.1.0",
+    "astro": "^5.1.0",
+    "plotly.js-dist-min": "^2.35.0",
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@types/three": "^0.170.0",
+    "cross-env": "^7.0.3",
+    "typescript": "^5.6.0"
+  }
+}
