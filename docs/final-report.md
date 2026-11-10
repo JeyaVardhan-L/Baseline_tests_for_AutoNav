@@ -87,7 +87,7 @@ DEC-006 (gate thresholds, fixed before looking at ground truth), DEC-009/012/022
 
 ## 7. Needs your permission next
 
-1. **Git history:** the original repository history contains `C:\Users\user\Downloads\IROC-U` (an old README, commit 337d95a, removed on this branch) and upstream contributors' e-mail addresses. Decide whether to rewrite history before pushing. I did not.
+1. **Git history:** the original repository history contains a local Windows user-profile path (an old README, commit 337d95a, removed on this branch) and upstream contributors' e-mail addresses. Decide whether to rewrite history before pushing. I did not.
 2. **Push** the branch (this triggers `ci.yml` and lets you start `arm-benchmark.yml` for the first ARM-cloud result).
 3. **GitHub Pages deploy** of `site/dist` (set `SITE_BASE` for a project site) and merging into `master`.
 4. Whether to commit the committed run excerpts (`site/public/data`, 5.3 MB) as-is.
