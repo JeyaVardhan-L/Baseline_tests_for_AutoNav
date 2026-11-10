@@ -23,7 +23,7 @@ from autonav_baseline.datasets.base import (
     LiDARFrame,
     DatasetInspectionResult,
 )
-from autonav_baseline.datasets.io import load_point_cloud_file, discover_timestamps
+from autonav_baseline.datasets.io import load_point_cloud_file, discover_timestamps, scan_sort_key
 
 
 class NewerCollegeAdapter(DatasetAdapter):
@@ -84,7 +84,7 @@ class NewerCollegeAdapter(DatasetAdapter):
             p for p in self.root_path.rglob("*")
             if p.is_file() and p.suffix.lower() in self.SUPPORTED_LIDAR_EXTENSIONS
         ]
-        return sorted(files)
+        return sorted(files, key=scan_sort_key)
 
     def inspect(self) -> DatasetInspectionResult:
         if not self.root_path or not self.root_path.exists():

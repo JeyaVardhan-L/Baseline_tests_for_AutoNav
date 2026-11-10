@@ -78,6 +78,28 @@ class TestRosStyleFilenames(unittest.TestCase):
             self.assertIsNone(discover_timestamps(Path(d), [p]))
 
 
+class TestChronologicalOrdering(unittest.TestCase):
+    def test_unpadded_nanoseconds_sort_chronologically(self):
+        # Lexicographic order puts `_59876608` after `_157463040`, scrambling frames within a second.
+        from autonav_baseline.datasets.io import scan_sort_key
+        names = ["cloud_1583838094_157463040.pcd", "cloud_1583838094_59876608.pcd",
+                 "cloud_1583838095_9999999.pcd", "cloud_1583838094_957463040.pcd"]
+        self.assertNotEqual(sorted(names), sorted(names, key=scan_sort_key))
+        self.assertEqual(
+            sorted(names, key=scan_sort_key),
+            ["cloud_1583838094_59876608.pcd", "cloud_1583838094_157463040.pcd",
+             "cloud_1583838094_957463040.pcd", "cloud_1583838095_9999999.pcd"])
+
+    def test_adapter_yields_frames_in_time_order(self):
+        from autonav_baseline.datasets.newer_college import NewerCollegeAdapter
+        with tempfile.TemporaryDirectory() as d:
+            for n in ("cloud_1583838094_157463040.pcd", "cloud_1583838094_59876608.pcd"):
+                _ouster_pcd(Path(d) / n, n=10, declared=10)
+            frames = list(NewerCollegeAdapter(root_path=Path(d)).get_lidar_frames())
+            self.assertEqual([f.metadata["filename"] for f in frames],
+                             ["cloud_1583838094_59876608.pcd", "cloud_1583838094_157463040.pcd"])
+            self.assertLess(frames[0].timestamp, frames[1].timestamp)
+
 class TestKittiDoesNotInventTimestamps(unittest.TestCase):
     def _make(self, root: Path, n=3):
         vel = root / "velodyne"

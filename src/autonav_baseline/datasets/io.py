@@ -10,6 +10,20 @@ import re
 import numpy as np
 
 
+_ROS_NAME = re.compile(r"^(?:[A-Za-z][A-Za-z0-9]*_)?(\d{9,10})_(\d{1,9})\.[A-Za-z]+$")
+
+
+def scan_sort_key(path: Path):
+    """
+    Chronological sort key for scan files. ROS-style names `cloud_<sec>_<nsec>.pcd` carry an UNPADDED
+    nanosecond field, so lexicographic order is wrong within a second (e.g. `_59876608` sorts after
+    `_157463040`). Files with such names sort by (sec, nsec); everything else sorts by name.
+    """
+    m = _ROS_NAME.match(Path(path).name)
+    if m:
+        return (0, int(m.group(1)), int(m.group(2)), "")
+    return (1, 0, 0, Path(path).name)
+
 def parse_pcd_file(fpath: Path) -> Tuple[np.ndarray, Optional[np.ndarray], Dict[str, Any]]:
     """
     Parses an uncompressed ASCII or binary Point Cloud Data (.pcd) file.

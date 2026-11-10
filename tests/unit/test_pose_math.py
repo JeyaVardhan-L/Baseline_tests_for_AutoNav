@@ -188,7 +188,7 @@ class TestTrajectoryEvaluation(unittest.TestCase):
         gt, t = self._line(0.1, yaw_step=0.5)
         x = np.eye(4)
         x[:3, :3], x[:3, 3] = rz(33.0), [4.0, -1.0, 2.0]
-        res = evaluate_trajectory(x @ gt, t, gt, t)["summary"]
+        res = evaluate_trajectory(x @ gt, t, gt, t, body_frames_match=True)["summary"]
         self.assertLess(res["ate_m"]["rmse"], 1e-9)
         self.assertLess(res["rpe"]["time_1s"]["translation_m"]["max"], 1e-9)
         self.assertLess(res["rpe"]["time_1s"]["rotation_deg"]["max"], 1e-4)
@@ -196,7 +196,7 @@ class TestTrajectoryEvaluation(unittest.TestCase):
     def test_rpe_matches_known_scale_error(self):
         gt, t = self._line(0.10)
         est, _ = self._line(0.11)      # estimate overshoots by 10 %
-        res = evaluate_trajectory(est, t, gt, t)["summary"]
+        res = evaluate_trajectory(est, t, gt, t, body_frames_match=True)["summary"]
         one_s = res["rpe"]["time_1s"]
         self.assertAlmostEqual(one_s["translation_m"]["mean"], 0.10, places=9)   # 1.1 m - 1.0 m
         self.assertAlmostEqual(one_s["translation_percent_of_length"], 10.0, places=6)
@@ -204,10 +204,33 @@ class TestTrajectoryEvaluation(unittest.TestCase):
         ten_m = res["rpe"]["distance_10m"]
         self.assertAlmostEqual(ten_m["translation_m"]["mean"], 1.0, delta=0.02)   # 11 m - 10 m
 
+
+    def test_position_rpe_ignores_unknown_sensor_to_body_extrinsic(self):
+        # Ground-truth poses refer to a body frame yawed 141 deg from the sensor frame (as observed
+        # on Newer College). Positions are unaffected, so the default position RPE is ~0 while the
+        # SE(3) RPE would mostly measure the frame offset.
+        gt, t = self._line(0.1, yaw_step=0.5)
+        e = np.eye(4)
+        e[:3, :3] = rz(141.0)
+        est = gt @ e                                   # same motion, different body frame
+        res = evaluate_trajectory(est, t, gt, t)["summary"]
+        self.assertEqual(res["rpe_mode"], "world_position_after_umeyama_alignment")
+        self.assertLess(res["rpe"]["time_1s"]["translation_m"]["max"], 1e-9)
+        self.assertEqual(res["rpe"]["time_1s"]["rotation_deg"], "UNAVAILABLE")
+        full = evaluate_trajectory(est, t, gt, t, body_frames_match=True)["summary"]
+        self.assertGreater(full["rpe"]["time_1s"]["translation_m"]["mean"], 0.5)
+
+    def test_position_rpe_matches_known_scale_error(self):
+        gt, t = self._line(0.10)
+        est, _ = self._line(0.11)
+        res = evaluate_trajectory(est, t, gt, t)["summary"]
+        # Umeyama (no scale) centres the 10 % longer line on the GT line, which spreads the error
+        # symmetrically. A 1 s window still differs by ~0.1 m of the 1.0 m GT displacement.
+        self.assertAlmostEqual(res["rpe"]["time_1s"]["translation_m"]["mean"], 0.10, delta=0.005)
     def test_rpe_rotation_drift(self):
         gt, t = self._line(0.0)                       # stationary
         est, _ = self._line(0.0, yaw_step=1.0)        # estimate spins 1 deg per frame
-        res = evaluate_trajectory(est, t, gt, t)["summary"]
+        res = evaluate_trajectory(est, t, gt, t, body_frames_match=True)["summary"]
         self.assertAlmostEqual(res["rpe"]["time_1s"]["rotation_deg"]["mean"], 10.0, places=6)
         self.assertAlmostEqual(res["rpe"]["time_1s"]["translation_m"]["max"], 0.0, places=9)
 

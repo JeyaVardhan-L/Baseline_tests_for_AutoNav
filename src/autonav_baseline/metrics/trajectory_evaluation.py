@@ -210,6 +210,7 @@ def evaluate_trajectory(
     max_dt: float = 0.02,
     rpe_seconds: Tuple[float, ...] = (1.0, 10.0),
     rpe_distances_m: Tuple[float, ...] = (10.0, 50.0),
+    body_frames_match: bool = False,
 ) -> Dict[str, Any]:
     """
     Evaluates an estimated trajectory against ground truth.
@@ -250,6 +251,15 @@ def evaluate_trajectory(
     gt_path = float(gt_cum[-1])
     ate_s = _stats(ate)
 
+    def _window_errors(i, j):
+        """Per-window errors. SE(3) RPE if the body frames are known to match, else world-frame
+        position RPE after the global alignment (independent of any sensor-to-body extrinsic)."""
+        if body_frames_match:
+            return relative_pose_errors(P, Q, i, j)
+        d_est = est_aligned[j] - est_aligned[i]
+        d_gt = gt_xyz[j] - gt_xyz[i]
+        return np.linalg.norm(d_est - d_gt, axis=1), None
+
     rpe: Dict[str, Any] = {}
     for sec in rpe_seconds:
         target = tt + sec
@@ -262,10 +272,11 @@ def evaluate_trajectory(
         if len(i) == 0:
             rpe[f"time_{sec:g}s"] = {"n": 0}
             continue
-        te, re_ = relative_pose_errors(P, Q, i, j)
+        te, re_ = _window_errors(i, j)
         seg = gt_cum[j] - gt_cum[i]
         rpe[f"time_{sec:g}s"] = {
-            "translation_m": _stats(te), "rotation_deg": _stats(re_),
+            "translation_m": _stats(te),
+            "rotation_deg": _stats(re_) if re_ is not None else "UNAVAILABLE",
             "mean_segment_length_m": float(np.mean(seg)),
             "translation_percent_of_length": float(np.mean(te) / max(np.mean(seg), 1e-9) * 100.0),
         }
@@ -276,10 +287,11 @@ def evaluate_trajectory(
         if len(i) == 0:
             rpe[f"distance_{d:g}m"] = {"n": 0}
             continue
-        te, re_ = relative_pose_errors(P, Q, i, j)
+        te, re_ = _window_errors(i, j)
         seg = gt_cum[j] - gt_cum[i]
         rpe[f"distance_{d:g}m"] = {
-            "translation_m": _stats(te), "rotation_deg": _stats(re_),
+            "translation_m": _stats(te),
+            "rotation_deg": _stats(re_) if re_ is not None else "UNAVAILABLE",
             "mean_segment_length_m": float(np.mean(seg)),
             "translation_percent_of_length": float(np.mean(te) / max(np.mean(seg), 1e-9) * 100.0),
         }
@@ -294,7 +306,8 @@ def evaluate_trajectory(
         "gt_path_length_m": gt_path,
         "final_position_error_after_alignment_m": float(ate[-1]),
         "rpe": rpe,
-        "assumptions": ["Ground-truth poses are in the same body frame as the estimate (sensor frame): UNVERIFIED"],
+        "rpe_mode": ("se3_body_frame" if body_frames_match else "world_position_after_umeyama_alignment"),
+        "assumptions": (["Ground-truth poses are in the same body frame as the estimate (sensor frame): caller-asserted"] if body_frames_match else ["Sensor and ground-truth body frames may differ (extrinsic not calibrated): RPE is world-frame position error after global alignment; rotation RPE UNAVAILABLE"]),
     }
     per_pose = {"t": tt, "ate_m": ate, "gt_xyz": gt_xyz, "est_aligned_xyz": est_aligned,
                 "alignment_R": r_align, "alignment_t": t_align}

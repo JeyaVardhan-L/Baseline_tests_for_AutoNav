@@ -126,3 +126,23 @@ All significant design and engineering decisions are recorded here with context,
 | **Date** | 2026-11-10 |
 | **Status** | ACCEPTED |
 | **Decision** | Docker is not installed, so the 4-core and 1-core laptop profiles use thread environment variables plus CPU affinity (psutil), and record peak RSS instead of a memory cap. This limits CPU count only; it does not emulate a Pi's memory bandwidth, cache or clock. |
+
+## DEC-012 — Ground-truth body frame differs from the sensor frame: extrinsic-free RPE by default
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-11-10 |
+| **Status** | ACCEPTED (supersedes the assumption in DEC-009) |
+| **Evidence** | On the first 40 frames of the bag window, the mean step direction differs by ~141 deg yaw between the estimate (sensor frame) and the ground truth (body frame); z axes agree. Full SE(3) RPE over 1 s gave 2.35 m (183 %) while Umeyama ATE was 0.10 m, which is only consistent with a frame offset. GT per-step rotations are also jittery (alternating +-2-3 deg) whereas total yaw over the window agrees (GT 23.1 deg, estimate 19.3 deg). |
+| **Decision** | `evaluate_trajectory` defaults to world-frame position RPE after global Umeyama alignment (independent of any sensor-to-body extrinsic). Rotation RPE is reported UNAVAILABLE. Full SE(3) RPE remains available with `body_frames_match=True`. |
+| **Alternatives** | Hand-eye calibrate the extrinsic from the same sequence (uses ground truth to tune the evaluation; ill-conditioned for near-straight windows). Left as future work. |
+| **Limits** | Alignment is fitted over the whole window, so position RPE is mildly optimistic. A short straight window can be aligned even when reversed, so ATE alone is never used as the only check. |
+
+## DEC-013 — Frames are sorted by parsed timestamp, not by filename
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-11-10 |
+| **Status** | ACCEPTED |
+| **Evidence** | `cloud_<sec>_<nsec>` has an unpadded nsec field; lexicographic sort scrambled the 271 extracted frames (dt min -0.50 s). The earlier sparse sets hid this because few frames shared a second. |
+| **Decision** | `scan_sort_key` sorts by (sec, nsec); the adapter and `tools/validate_window.py` use it. Extracted names keep the dataset's unpadded convention. Regression tests added. |

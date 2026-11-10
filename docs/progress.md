@@ -16,6 +16,8 @@ Branch: `refine/autonav-lab`. Machine: Intel Core i5-13420H (8 cores / 12 thread
 | ATE with association + Umeyama, real RPE | Done | `TestTrajectoryEvaluation` |
 | Voxel known-answer check | Done | `TestVoxelKnownAnswer` |
 
+Findings during Phase 1 (see DEC-012, DEC-013): unpadded-nsec filenames broke chronological order; GT body frame differs from the sensor frame, so RPE is now extrinsic-free by default. Suite after these fixes: `python -B -m unittest discover -s tests` -> Ran 67 tests, OK.
+
 Full suite after Phase 0: `python -B -m unittest discover -s tests` -> Ran 63 tests, OK (35 pre-existing + 28 new).
 
 ## Phase 1: data
