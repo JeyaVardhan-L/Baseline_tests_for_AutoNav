@@ -100,3 +100,10 @@ DEC-006 (gate thresholds, fixed before looking at ground truth), DEC-009/012/022
 4. Sweep voxel size and point subsampling against accuracy (latency/accuracy frontier); test fewer ICP iterations with the p2plane guess.
 5. Compile the nearest-neighbour and solver stages (C++ or Numba) and re-measure per stage.
 6. Longer Newer College windows (the other bag parts) and a second walking Spires sequence to separate scene effects from algorithm effects.
+## 9. After the report: push and Pages (2026-11-10)
+
+- **Pushed:** `master` was fast-forwarded from `ce0e670` to `d89a231` (no force, history kept, as decided: DEC-023). A history rewrite was prepared and verified in a throwaway clone but deliberately not pushed; the old path string therefore remains in old public commits (`337d95a`) and is gone from the tip. A verified bundle backup of the pre-push history exists outside the repository.
+- **CI (`tests` workflow) ran on GitHub and passed on all four jobs** (Ubuntu and Windows, Python 3.11 and 3.13) from a fresh clone, with no datasets: this is independent confirmation that the 75 tests do not depend on the author's machine.
+- **Pages: not live yet.** The `pages` workflow builds up to `actions/configure-pages`, which fails because GitHub Pages is not enabled for the repository and the workflow token cannot enable it. **One setting is needed from the owner:** repository Settings -> Pages -> Build and deployment -> Source: **GitHub Actions**, then re-run the `pages` workflow (Actions tab) or push any change under `site/`. The expected address is `https://jeyavardhan-l.github.io/Baseline_tests_for_AutoNav/`. The README already links to it, so the link will 404 until then.
+- **ARM-cloud benchmark:** still not run. It is a manual workflow (`arm-benchmark`, Actions tab -> Run workflow); its results will be the first real ARM measurement.
+- Mistake found and fixed: the first `pages.yml` was invalid YAML (an unquoted colon in a step name) because I had validated the other two workflows but not that one; it is fixed in `d89a231` and all three workflow files now parse.
