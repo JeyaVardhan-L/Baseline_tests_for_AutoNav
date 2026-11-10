@@ -67,3 +67,14 @@ tmp/
 temp/
 scratch/
 nothing
+
+# ---- Local-only config and data (never commit; holds the private Drive link) ----
+config.local.yaml
+datasets/newer-college/01_short_experiment/
+datasets/oxford-spires/*/
+artifacts/runs/
+artifacts/local/
+.venv-lab/
+site/node_modules/
+site/dist/
+site/.astro/

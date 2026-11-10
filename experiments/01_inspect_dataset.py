@@ -84,7 +84,7 @@ def inspect_dataset_workflow(
         if lidar_files:
             sample_file = lidar_files[0]
             try:
-                pts = load_point_cloud_file(sample_file)
+                pts, _, _ = load_point_cloud_file(sample_file)
                 spatial_stats = {
                     "sample_frame_file": sample_file.name,
                     "sample_point_count": int(len(pts)),

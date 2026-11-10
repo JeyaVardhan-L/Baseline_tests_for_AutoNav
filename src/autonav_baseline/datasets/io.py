@@ -84,19 +84,33 @@ def parse_pcd_file(fpath: Path) -> Tuple[np.ndarray, Optional[np.ndarray], Dict[
             dtype_fields.append((fld, np_type))
 
         pcd_dtype = np.dtype(dtype_fields)
-        with open(fpath, "rb") as f_bin:
-            f_bin.seek(header_byte_offset)
-            raw_bytes = f_bin.read()
-
         record_size = pcd_dtype.itemsize
-        num_records = len(raw_bytes) // record_size
-        if num_records == 0:
+        payload_bytes = fpath.stat().st_size - header_byte_offset
+        available_records = payload_bytes // record_size
+        if available_records == 0:
             raise ValueError(f"PCD binary file {fpath.name} contains 0 records.")
 
-        arr = np.frombuffer(raw_bytes[:num_records * record_size], dtype=pcd_dtype)
+        # The header's POINTS (or WIDTH*HEIGHT) is authoritative. Bytes after the declared
+        # records (padding or trailing data) are NOT points and must not be parsed as such.
+        if points_count > 0:
+            if available_records < points_count:
+                raise ValueError(
+                    f"PCD binary file {fpath.name} is truncated: header declares {points_count} points "
+                    f"but the payload holds only {available_records} complete records."
+                )
+            num_records = points_count
+        else:
+            num_records = available_records
+
+        arr = np.fromfile(str(fpath), dtype=pcd_dtype, count=num_records, offset=header_byte_offset)
         xyz = np.column_stack([arr["x"], arr["y"], arr["z"]]).astype(np.float32)
         intensity = arr["intensity"].astype(np.float32) if "intensity" in fields else None
-        return xyz, intensity, {"format": "pcd_binary", "fields": fields, "points_declared": points_count}
+        return xyz, intensity, {
+            "format": "pcd_binary",
+            "fields": fields,
+            "points_declared": points_count,
+            "trailing_bytes_ignored": int(payload_bytes - num_records * record_size),
+        }
 
     else:
         raise ValueError(
@@ -319,8 +333,15 @@ def discover_timestamps(root_path: Optional[Path], files: List[Path]) -> Optiona
     # Check for filename-encoded timestamps
     # Pattern: Unix timestamp with optional decimal: e.g. 1583842345.123456 or 1583842345123456789
     ts_from_names = []
+    # Forms: 1583842345.123456.pcd | 1583842345123456789.bin | cloud_<sec>_<nsec>.pcd (ROS-style)
     ts_pattern = re.compile(r"^(\d{9,19}(?:\.\d+)?)\.(?:pcd|bin|npy|ply)$")
+    ros_pattern = re.compile(r"^(?:[A-Za-z][A-Za-z0-9]*_)?(\d{9,10})_(\d{1,9})\.(?:pcd|bin|npy|ply)$")
     for f in files:
+        ros_match = ros_pattern.match(f.name)
+        if ros_match:
+            # The second field is an integer count of nanoseconds, not a decimal fraction.
+            ts_from_names.append(int(ros_match.group(1)) + int(ros_match.group(2)) * 1e-9)
+            continue
         match = ts_pattern.match(f.name)
         if match:
             try:

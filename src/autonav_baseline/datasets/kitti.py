@@ -6,6 +6,7 @@ NOTE: Automotive reference dataset — optional computational baseline, NOT repr
 from pathlib import Path
 from typing import List, Optional, Generator, Dict, Any
 import numpy as np
+from autonav_baseline.datasets.io import discover_timestamps
 from autonav_baseline.datasets.base import (
     DatasetAdapter,
     SensorType,
@@ -61,7 +62,7 @@ class KITTIAdapter(DatasetAdapter):
             file_formats=[".bin"],
             available_streams=["velodyne_pointclouds"],
             frame_count=len(bin_files),
-            approx_duration_s=len(bin_files) / 10.0 if bin_files else 0.0,
+            approx_duration_s=None,
             nominal_rate_hz=10.0,
             observed_rate_hz=None,
             is_rate_measured=False,
@@ -82,13 +83,15 @@ class KITTIAdapter(DatasetAdapter):
             raise FileNotFoundError(f"No .bin files found in {self.root_path}")
 
         limit = min(len(bin_files), max_frames) if max_frames else len(bin_files)
+        # Timestamps come only from a times.txt next to the scans; they are never invented from the index.
+        timestamps = discover_timestamps(self.root_path, bin_files)
 
         for i in range(limit):
             fpath = bin_files[i]
             pts = np.fromfile(str(fpath), dtype=np.float32).reshape(-1, 4)
             xyz = pts[:, :3]
             intensity = pts[:, 3]
-            t = i * 0.10  # 10 Hz nominal
+            t = timestamps[i] if timestamps else None
             yield LiDARFrame(
                 index=i,
                 timestamp=t,

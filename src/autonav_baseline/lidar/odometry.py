@@ -1,31 +1,26 @@
 """
-LiDAR-only Iterative Closest Point (ICP) scan-to-scan odometry baseline.
+LiDAR-only scan-to-scan odometry baseline (point-to-point ICP).
 
-What is ICP?
-  Iterative Closest Point (ICP) is the fundamental algorithm in robotics for aligning two 3D point
-  clouds. Given a source scan P and a target scan Q, ICP iteratively:
-    1. Finds the closest point in Q for each point in P using a spatial k-d tree.
-    2. Filters outlier correspondences based on a maximum distance threshold.
-    3. Calculates the optimal 3D rigid transformation (Rotation R, Translation t) that minimizes
-       the sum of squared distances between matched point pairs using Singular Value Decomposition (SVD).
-    4. Applies the transformation to P and repeats until convergence.
+Frame conventions (these matter; they are verified in tests/unit/test_pose_math.py):
 
-Why scan-to-scan odometry?
-  By estimating relative motion (R_k, t_k) between consecutive sensor scans k-1 and k,
-  the vehicle's global 6-DoF pose can be estimated by accumulating transformations:
-    T_0^k = T_0^{k-1} * T_{k-1}^k
+  * Scan k is expressed in the sensor frame S_k.
+  * ICP registers a SOURCE cloud (scan k, in S_k) onto a TARGET cloud (scan k-1, in S_{k-1}).
+    The returned 4x4 matrix T maps source points into the target frame:  p_{k-1} = T @ p_k.
+    Therefore T = T_{k-1}^{k}, the pose of S_k expressed in S_{k-1}.
+  * The world pose of the sensor accumulates as  W_k = W_{k-1} @ T.
+    (Not inv(T): that would run the trajectory backwards.)
 
-Failure Modes & Limitations (Important for Beginners):
-  1. Geometric Degeneracy: In long featureless corridors or flat fields, points can slide along
-     the wall without constraint, leading to unobservable longitudinal motion.
-  2. Velocity Bounds: If vehicle displacement between scans exceeds `max_correspondence_distance`,
-     the algorithm associates points with wrong surfaces and diverges.
-  3. Cumulative Drift: Scan-to-scan odometry does not perform loop closure or global bundle adjustment;
-     small errors in each frame accumulate quadratically over distance.
+Registration validity gate:
+  ICP "success" only means the solver ran. A registration is ACCEPTED only if it also passes
+  RegistrationGate (inlier ratio, residual, motion plausibility). Rejected registrations leave the
+  pose and the reference scan unchanged and are counted, never silently accepted.
+
+Known limitations of this baseline: no loop closure or map (drift is unbounded), no motion prior,
+no deskewing, point-to-point error metric only.
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, Tuple, Dict, Any, List
+from typing import Optional, Tuple, Dict, Any, List, Callable
 import time
 import numpy as np
 from scipy.spatial import cKDTree
@@ -36,15 +31,52 @@ from autonav_baseline.lidar.filtering import remove_invalid_points, filter_by_ra
 @dataclass
 class ICPResult:
     """Result of registering a single pair of point clouds."""
-    success: bool
-    transformation: np.ndarray  # 4x4 rigid transformation matrix [R, t; 0, 1]
-    rotation: np.ndarray        # 3x3 rotation matrix R
-    translation: np.ndarray     # 3-vector translation t in meters
-    fitness_score: float        # Mean Euclidean residual of inlier correspondences (meters)
-    inlier_ratio: float         # inliers / total source points
+    success: bool               # solver ran to a result (NOT a validity verdict; see RegistrationGate)
+    transformation: np.ndarray  # 4x4 T with p_target = T @ p_source
+    rotation: np.ndarray        # 3x3
+    translation: np.ndarray     # 3-vector, meters
+    fitness_score: float        # mean Euclidean residual of inliers at the start of the last iteration (m)
+    inlier_ratio: float         # inliers / source points
     num_inliers: int
     iterations: int
-    status: str                 # "CONVERGED", "MAX_ITERATIONS", "INSUFFICIENT_POINTS", "DEGENERATE"
+    status: str                 # CONVERGED, MAX_ITERATIONS, INSUFFICIENT_POINTS, DEGENERATE_MATCHES_UNDER_THRESHOLD
+    residual_history: List[float] = field(default_factory=list)  # mean inlier residual per iteration (m)
+
+
+@dataclass
+class RegistrationGate:
+    """
+    Thresholds that turn an ICP result into an accepted / rejected registration.
+
+    The values are fixed a priori from sensor physics (a walking sensor moves about 0.1 m between
+    10 Hz scans) and were NOT tuned against ground-truth error. They are recorded in run.json.
+    """
+    min_inlier_ratio: float = 0.30
+    max_mean_residual_m: float = 0.25
+    max_step_translation_m: float = 1.0
+    max_step_rotation_deg: float = 20.0
+
+    def check(self, icp: ICPResult) -> Tuple[bool, str]:
+        if not icp.success:
+            return False, f"icp_failed:{icp.status}"
+        if icp.inlier_ratio < self.min_inlier_ratio:
+            return False, "low_inlier_ratio"
+        if icp.fitness_score > self.max_mean_residual_m:
+            return False, "high_residual"
+        step = float(np.linalg.norm(icp.translation))
+        if step > self.max_step_translation_m:
+            return False, "implausible_translation"
+        if rotation_angle_deg(icp.rotation) > self.max_step_rotation_deg:
+            return False, "implausible_rotation"
+        return True, "accepted"
+
+    def to_dict(self) -> Dict[str, float]:
+        return {
+            "min_inlier_ratio": self.min_inlier_ratio,
+            "max_mean_residual_m": self.max_mean_residual_m,
+            "max_step_translation_m": self.max_step_translation_m,
+            "max_step_rotation_deg": self.max_step_rotation_deg,
+        }
 
 
 @dataclass
@@ -52,46 +84,65 @@ class OdometryStepResult:
     """Result of processing one frame in the odometry sequence."""
     frame_index: int
     timestamp: Optional[float]
-    success: bool
-    pose_4x4: np.ndarray        # 4x4 global pose in world frame
-    position_xyz: np.ndarray    # [x, y, z] position in world frame
-    step_translation_m: float   # Distance moved since previous frame (meters)
-    registration_latency_ms: float
+    success: bool               # True if the frame is the initial frame or its registration was ACCEPTED
+    pose_4x4: np.ndarray        # world pose of the sensor after this frame
+    position_xyz: np.ndarray
+    step_translation_m: float   # accepted motion since the reference scan (0 if rejected)
+    registration_latency_ms: float  # total processing time of this frame (preprocess + register); excludes file I/O
     raw_points_count: int
     downsampled_points_count: int
     fitness_score: float
     inlier_ratio: float
     status: str
+    # --- fields added for the measurement harness ---
+    accepted: bool = True
+    reject_reason: str = ""
+    preprocess_ms: float = 0.0
+    register_ms: float = 0.0
+    icp_iterations: int = 0
+    num_inliers: int = 0
+    points_after_valid: int = 0
+    points_after_range: int = 0
+    step_rotation_deg: float = 0.0
+    residual_history: List[float] = field(default_factory=list)
+
+
+def rotation_angle_deg(rotation: np.ndarray) -> float:
+    """Rotation angle of a 3x3 rotation matrix in degrees (axis-angle magnitude)."""
+    cos_theta = (float(np.trace(rotation)) - 1.0) / 2.0
+    return float(np.degrees(np.arccos(np.clip(cos_theta, -1.0, 1.0))))
 
 
 def compute_best_rigid_transform(source: np.ndarray, target: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Computes optimal 3D rigid transformation [R, t] aligning source points to target points
-    using the Kabsch-Umeyama SVD algorithm. Minimizes: sum(||target_i - (R * source_i + t)||^2).
+    Optimal rigid transform [R, t] aligning source to target (Kabsch/Umeyama via SVD).
+    Minimizes sum(||target_i - (R * source_i + t)||^2).
     """
     assert len(source) == len(target) and len(source) >= 3
 
     centroid_source = np.mean(source, axis=0)
     centroid_target = np.mean(target, axis=0)
 
-    # Center coordinates
     p = source - centroid_source
     q = target - centroid_target
 
-    # Cross-covariance matrix H = P^T * Q
     h = p.T @ q
-
-    # SVD
     u, _, vt = np.linalg.svd(h)
     r = vt.T @ u.T
 
-    # Reflection check (ensure det(R) == +1, not -1)
-    if np.linalg.det(r) < 0:
+    if np.linalg.det(r) < 0:  # reflection -> proper rotation
         vt[-1, :] *= -1
         r = vt.T @ u.T
 
     t = centroid_target - r @ centroid_source
     return r, t
+
+
+def _compose(r: np.ndarray, t: np.ndarray) -> np.ndarray:
+    m = np.eye(4, dtype=np.float64)
+    m[:3, :3] = r
+    m[:3, 3] = t
+    return m
 
 
 def icp_point_to_point(
@@ -102,28 +153,28 @@ def icp_point_to_point(
     tolerance: float = 1e-4,
     initial_transform: Optional[np.ndarray] = None,
     min_inliers: int = 20,
+    target_tree: Optional[cKDTree] = None,
 ) -> ICPResult:
     """
-    Point-to-point ICP registration using pure NumPy and SciPy cKDTree.
+    Point-to-point ICP using NumPy and SciPy cKDTree.
 
     Args:
-        source_points: (M, 3) point cloud to align (moving scan).
-        target_points: (N, 3) reference point cloud (fixed scan).
-        max_correspondence_distance: Maximum distance in meters to accept a point correspondence.
-        max_iterations: Maximum number of alignment iterations.
-        tolerance: Minimum translation change norm in meters to declare convergence.
-        initial_transform: Optional 4x4 initial guess matrix.
-        min_inliers: Minimum matched points required to proceed with registration.
+        source_points: (M, 3) moving scan.
+        target_points: (N, 3) fixed reference scan.
+        max_correspondence_distance: correspondences farther than this (meters) are ignored.
+        max_iterations: iteration cap.
+        tolerance: converged when the update translation norm, or the change in mean residual, is below this (m).
+        initial_transform: optional 4x4 initial guess for T (source -> target).
+        min_inliers: fewer matched points than this aborts the registration.
+        target_tree: optional pre-built KD-tree of target_points (avoids rebuilding).
 
     Returns:
-        ICPResult with estimated 4x4 transformation and quality diagnostics.
+        ICPResult. `transformation` maps source points into the target frame.
     """
-    identity_4x4 = np.eye(4, dtype=np.float64)
-
     if len(source_points) < min_inliers or len(target_points) < min_inliers:
         return ICPResult(
             success=False,
-            transformation=identity_4x4,
+            transformation=np.eye(4, dtype=np.float64),
             rotation=np.eye(3, dtype=np.float64),
             translation=np.zeros(3, dtype=np.float64),
             fitness_score=float("inf"),
@@ -133,41 +184,37 @@ def icp_point_to_point(
             status="INSUFFICIENT_POINTS",
         )
 
-    # Initialize current transformation
-    current_t = identity_4x4.copy() if initial_transform is None else initial_transform.copy().astype(np.float64)
-    r_accum = current_t[:3, :3]
-    t_accum = current_t[:3, 3]
+    start_t = np.eye(4, dtype=np.float64) if initial_transform is None else np.array(initial_transform, dtype=np.float64)
+    r_accum = start_t[:3, :3].copy()
+    t_accum = start_t[:3, 3].copy()
 
-    # Build k-d tree on static target points once
-    target_tree = cKDTree(target_points)
+    tree = target_tree if target_tree is not None else cKDTree(target_points)
 
     num_source = len(source_points)
-    src_pts = source_points.copy().astype(np.float64)
+    src_pts = np.asarray(source_points, dtype=np.float64)
+    target_pts = np.asarray(target_points)
 
     prev_error = float("inf")
     converged = False
     iterations_run = 0
     final_inliers = 0
     final_error = float("inf")
+    history: List[float] = []
 
     for it in range(max_iterations):
         iterations_run = it + 1
 
-        # Transform source points with current accumulated pose
-        transformed_src = (r_accum @ src_pts.T).T + t_accum
+        transformed_src = src_pts @ r_accum.T + t_accum
+        distances, indices = tree.query(transformed_src, k=1, workers=1)
 
-        # Query nearest neighbors in target
-        distances, indices = target_tree.query(transformed_src, k=1, workers=1)
-
-        # Inlier filtering
         inlier_mask = distances <= max_correspondence_distance
-        num_inliers = int(np.sum(inlier_mask))
+        num_inliers = int(np.count_nonzero(inlier_mask))
         final_inliers = num_inliers
 
         if num_inliers < min_inliers:
             return ICPResult(
                 success=False,
-                transformation=current_t,
+                transformation=_compose(r_accum, t_accum),
                 rotation=r_accum,
                 translation=t_accum,
                 fitness_score=float("inf"),
@@ -175,24 +222,22 @@ def icp_point_to_point(
                 num_inliers=num_inliers,
                 iterations=iterations_run,
                 status="DEGENERATE_MATCHES_UNDER_THRESHOLD",
+                residual_history=history,
             )
 
         matched_src = transformed_src[inlier_mask]
-        matched_tgt = target_points[indices[inlier_mask]]
-
-        # Compute incremental step
-        delta_r, delta_t = compute_best_rigid_transform(matched_src, matched_tgt)
-
-        # Update accumulated transformation: T_new = delta_T * T_curr
-        r_accum = delta_r @ r_accum
-        t_accum = delta_r @ t_accum + delta_t
-        current_t[:3, :3] = r_accum
-        current_t[:3, 3] = t_accum
+        matched_tgt = target_pts[indices[inlier_mask]]
 
         mean_error = float(np.mean(distances[inlier_mask]))
         final_error = mean_error
+        history.append(mean_error)
 
-        # Check convergence
+        delta_r, delta_t = compute_best_rigid_transform(matched_src, matched_tgt)
+
+        # T_new = delta_T @ T_current
+        r_accum = delta_r @ r_accum
+        t_accum = delta_r @ t_accum + delta_t
+
         trans_delta_norm = float(np.linalg.norm(delta_t))
         if trans_delta_norm < tolerance or abs(prev_error - mean_error) < tolerance:
             converged = True
@@ -200,27 +245,31 @@ def icp_point_to_point(
 
         prev_error = mean_error
 
-    status_str = "CONVERGED" if converged else "MAX_ITERATIONS"
-    inlier_ratio = final_inliers / max(num_source, 1)
-
     return ICPResult(
         success=True,
-        transformation=current_t,
+        transformation=_compose(r_accum, t_accum),
         rotation=r_accum,
         translation=t_accum,
         fitness_score=final_error,
-        inlier_ratio=inlier_ratio,
+        inlier_ratio=final_inliers / max(num_source, 1),
         num_inliers=final_inliers,
         iterations=iterations_run,
-        status=status_str,
+        status="CONVERGED" if converged else "MAX_ITERATIONS",
+        residual_history=history,
     )
 
 
+def _distribution(samples: List[float]) -> Dict[str, float]:
+    if not samples:
+        return {k: 0.0 for k in ("mean", "p50", "p90", "p95", "p99", "max")}
+    a = np.asarray(samples, dtype=np.float64)
+    p = np.percentile(a, [50, 90, 95, 99])
+    return {"mean": float(a.mean()), "p50": float(p[0]), "p90": float(p[1]),
+            "p95": float(p[2]), "p99": float(p[3]), "max": float(a.max())}
+
+
 class ICPOdometry:
-    """
-    Sequential LiDAR scan-to-scan odometry pipeline.
-    Accumulates relative 3D pose transformations over time.
-    """
+    """Sequential scan-to-scan odometry. Accumulates accepted relative transforms."""
 
     def __init__(
         self,
@@ -230,6 +279,8 @@ class ICPOdometry:
         max_correspondence_distance: float = 1.5,
         max_iterations: int = 30,
         tolerance: float = 1e-4,
+        gate: Optional[RegistrationGate] = None,
+        voxel_fn: Callable = voxel_downsample,
     ):
         self.voxel_size = voxel_size
         self.min_range = min_range
@@ -237,64 +288,36 @@ class ICPOdometry:
         self.max_correspondence_distance = max_correspondence_distance
         self.max_iterations = max_iterations
         self.tolerance = tolerance
+        self.gate = gate or RegistrationGate()
+        self.voxel_fn = voxel_fn
 
-        # State
         self.current_pose = np.eye(4, dtype=np.float64)
         self.previous_points: Optional[np.ndarray] = None
         self.step_history: List[OdometryStepResult] = []
-        self.successful_steps = 0
-        self.failed_steps = 0
+        self.successful_steps = 0   # accepted registrations
+        self.failed_steps = 0       # rejected registrations (ICP failure or gate rejection)
+        self.reject_counts: Dict[str, int] = {}
 
     def preprocess_points(self, raw_points: np.ndarray) -> np.ndarray:
         """Filters non-finite points, bounds ranges, and applies voxel downsampling."""
+        return self._preprocess(raw_points)[0]
+
+    def _preprocess(self, raw_points: np.ndarray) -> Tuple[np.ndarray, int, int]:
+        """Returns (points, count_after_valid, count_after_range)."""
         clean_pts, _ = remove_invalid_points(raw_points)
-        if len(clean_pts) == 0:
-            return clean_pts
+        n_valid = len(clean_pts)
+        if n_valid == 0:
+            return clean_pts, 0, 0
         range_pts, _ = filter_by_range(clean_pts, min_range=self.min_range, max_range=self.max_range)
-        if len(range_pts) == 0 or self.voxel_size <= 0:
-            return range_pts
-        downsampled, _ = voxel_downsample(range_pts, voxel_size=self.voxel_size)
-        return downsampled
+        n_range = len(range_pts)
+        if n_range == 0 or self.voxel_size <= 0:
+            return range_pts, n_valid, n_range
+        downsampled, _ = self.voxel_fn(range_pts, voxel_size=self.voxel_size)
+        return downsampled, n_valid, n_range
 
-    def process_frame(
-        self,
-        raw_points: np.ndarray,
-        frame_index: int,
-        timestamp: Optional[float] = None,
-    ) -> OdometryStepResult:
-        """
-        Processes one incoming point cloud frame and updates vehicle state.
-        """
-        raw_count = len(raw_points)
-        t_start = time.perf_counter()
-
-        # Preprocessing
-        pts = self.preprocess_points(raw_points)
-        downsampled_count = len(pts)
-
-        # Initial frame
-        if self.previous_points is None or len(self.step_history) == 0:
-            self.previous_points = pts
-            latency_ms = (time.perf_counter() - t_start) * 1000.0
-            res = OdometryStepResult(
-                frame_index=frame_index,
-                timestamp=timestamp,
-                success=True,
-                pose_4x4=self.current_pose.copy(),
-                position_xyz=self.current_pose[:3, 3].copy(),
-                step_translation_m=0.0,
-                registration_latency_ms=latency_ms,
-                raw_points_count=raw_count,
-                downsampled_points_count=downsampled_count,
-                fitness_score=0.0,
-                inlier_ratio=1.0,
-                status="INITIAL_FRAME",
-            )
-            self.step_history.append(res)
-            return res
-
-        # Register current frame (source) against previous frame (target)
-        icp_res = icp_point_to_point(
+    def _register(self, pts: np.ndarray) -> ICPResult:
+        """Registration step; variants override this."""
+        return icp_point_to_point(
             source_points=pts,
             target_points=self.previous_points,
             max_correspondence_distance=self.max_correspondence_distance,
@@ -302,77 +325,116 @@ class ICPOdometry:
             tolerance=self.tolerance,
         )
 
-        step_dist = 0.0
-        if icp_res.success:
-            # Relative motion: T_{prev}^{curr}.
-            # Update global pose: T_{world}^{curr} = T_{world}^{prev} * inv(T_{prev}^{curr})
-            rel_transform = icp_res.transformation
-            try:
-                rel_inv = np.linalg.inv(rel_transform)
-            except np.linalg.LinAlgError:
-                rel_inv = np.eye(4)
+    def process_frame(
+        self,
+        raw_points: np.ndarray,
+        frame_index: int,
+        timestamp: Optional[float] = None,
+    ) -> OdometryStepResult:
+        """Processes one incoming point cloud frame and updates the estimated pose."""
+        raw_count = len(raw_points)
+        t_start = time.perf_counter()
 
-            step_dist = float(np.linalg.norm(rel_inv[:3, 3]))
-            self.current_pose = self.current_pose @ rel_inv
+        pts, n_valid, n_range = self._preprocess(raw_points)
+        t_pre = time.perf_counter()
+        preprocess_ms = (t_pre - t_start) * 1000.0
+        downsampled_count = len(pts)
+
+        # Initial frame (reference only; no registration is performed)
+        if self.previous_points is None:
+            empty = len(pts) == 0
+            if not empty:
+                self.previous_points = pts
+            total_ms = (time.perf_counter() - t_start) * 1000.0
+            res = OdometryStepResult(
+                frame_index=frame_index, timestamp=timestamp, success=not empty,
+                pose_4x4=self.current_pose.copy(), position_xyz=self.current_pose[:3, 3].copy(),
+                step_translation_m=0.0, registration_latency_ms=total_ms,
+                raw_points_count=raw_count, downsampled_points_count=downsampled_count,
+                fitness_score=0.0, inlier_ratio=1.0,
+                status="INITIAL_FRAME_EMPTY" if empty else "INITIAL_FRAME",
+                accepted=not empty, reject_reason="empty_initial_frame" if empty else "",
+                preprocess_ms=preprocess_ms, register_ms=0.0,
+                points_after_valid=n_valid, points_after_range=n_range,
+            )
+            self.step_history.append(res)
+            return res
+
+        icp_res = self._register(pts)
+        accepted, reason = self.gate.check(icp_res)
+
+        step_dist = 0.0
+        step_rot = 0.0
+        if accepted:
+            # icp_res.transformation = T_{prev}^{curr}; world_curr = world_prev @ T
+            self.current_pose = self.current_pose @ icp_res.transformation
+            step_dist = float(np.linalg.norm(icp_res.translation))
+            step_rot = rotation_angle_deg(icp_res.rotation)
             self.previous_points = pts
             self.successful_steps += 1
         else:
             self.failed_steps += 1
+            self.reject_counts[reason] = self.reject_counts.get(reason, 0) + 1
 
-        latency_ms = (time.perf_counter() - t_start) * 1000.0
-
+        t_end = time.perf_counter()
         step_res = OdometryStepResult(
-            frame_index=frame_index,
-            timestamp=timestamp,
-            success=icp_res.success,
-            pose_4x4=self.current_pose.copy(),
-            position_xyz=self.current_pose[:3, 3].copy(),
-            step_translation_m=step_dist,
-            registration_latency_ms=latency_ms,
-            raw_points_count=raw_count,
-            downsampled_points_count=downsampled_count,
-            fitness_score=icp_res.fitness_score,
-            inlier_ratio=icp_res.inlier_ratio,
-            status=icp_res.status,
+            frame_index=frame_index, timestamp=timestamp, success=accepted,
+            pose_4x4=self.current_pose.copy(), position_xyz=self.current_pose[:3, 3].copy(),
+            step_translation_m=step_dist, registration_latency_ms=(t_end - t_start) * 1000.0,
+            raw_points_count=raw_count, downsampled_points_count=downsampled_count,
+            fitness_score=icp_res.fitness_score, inlier_ratio=icp_res.inlier_ratio,
+            status=icp_res.status, accepted=accepted, reject_reason="" if accepted else reason,
+            preprocess_ms=preprocess_ms, register_ms=(t_end - t_pre) * 1000.0,
+            icp_iterations=icp_res.iterations, num_inliers=icp_res.num_inliers,
+            points_after_valid=n_valid, points_after_range=n_range,
+            step_rotation_deg=step_rot, residual_history=list(icp_res.residual_history),
         )
         self.step_history.append(step_res)
         return step_res
 
     def get_trajectory_positions(self) -> np.ndarray:
-        """Returns (K, 3) array of estimated positions in meters."""
+        """(K, 3) estimated sensor positions in the world frame (world = first sensor frame)."""
         if not self.step_history:
             return np.zeros((0, 3), dtype=np.float64)
         return np.array([s.position_xyz for s in self.step_history], dtype=np.float64)
 
+    def get_trajectory_poses(self) -> np.ndarray:
+        """(K, 4, 4) estimated sensor poses in the world frame."""
+        if not self.step_history:
+            return np.zeros((0, 4, 4), dtype=np.float64)
+        return np.array([s.pose_4x4 for s in self.step_history], dtype=np.float64)
+
     def get_total_path_length_m(self) -> float:
-        """Returns total integrated distance traveled in meters."""
         return float(sum(s.step_translation_m for s in self.step_history))
 
     def get_summary_statistics(self) -> Dict[str, Any]:
-        """Calculates aggregate odometry metrics."""
-        latencies = [s.registration_latency_ms for s in self.step_history]
+        """
+        Aggregate odometry metrics. Latency statistics EXCLUDE the initial frame (it performs no
+        registration). The success rate is accepted registrations / registration attempts.
+        """
         total_frames = len(self.step_history)
-        reg_attempts = max(0, total_frames - 1)
-        success_rate = (
-            round((self.successful_steps / reg_attempts) * 100.0, 1)
-            if reg_attempts > 0
-            else 100.0
-        )
-        path_length = self.get_total_path_length_m()
-
-        lat_mean = float(np.mean(latencies)) if latencies else 0.0
-        lat_median = float(np.median(latencies)) if latencies else 0.0
-        lat_p95 = float(np.percentile(latencies, 95)) if latencies else 0.0
+        init_frames = 1 if total_frames else 0
+        attempts = max(0, total_frames - init_frames)
+        reg_steps = self.step_history[init_frames:]
+        latencies = [s.registration_latency_ms for s in reg_steps]
+        dist = _distribution(latencies)
+        success_rate = round(self.successful_steps / attempts * 100.0, 1) if attempts > 0 else 100.0
 
         return {
             "total_frames_processed": total_frames,
-            "registration_attempts": reg_attempts,
+            "initialization_frames": init_frames,
+            "registration_attempts": attempts,
             "successful_registrations": self.successful_steps,
             "failed_registrations": self.failed_steps,
+            "rejected_registrations": dict(self.reject_counts),
             "success_rate_percent": success_rate,
-            "total_path_length_m": round(path_length, 3),
-            "final_position_xyz": [round(c, 3) for c in (self.current_pose[:3, 3].tolist())],
-            "latency_mean_ms": round(lat_mean, 2),
-            "latency_median_ms": round(lat_median, 2),
-            "latency_p95_ms": round(lat_p95, 2),
+            "total_path_length_m": round(self.get_total_path_length_m(), 3),
+            "final_position_xyz": [round(c, 3) for c in self.current_pose[:3, 3].tolist()],
+            "latency_mean_ms": round(dist["mean"], 2),
+            "latency_median_ms": round(dist["p50"], 2),
+            "latency_p90_ms": round(dist["p90"], 2),
+            "latency_p95_ms": round(dist["p95"], 2),
+            "latency_p99_ms": round(dist["p99"], 2),
+            "latency_max_ms": round(dist["max"], 2),
+            "gate": self.gate.to_dict(),
         }

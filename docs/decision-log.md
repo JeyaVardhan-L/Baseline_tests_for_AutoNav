@@ -53,3 +53,76 @@ All significant design and engineering decisions are recorded here with context,
 ---
 
 *New decisions should be appended below with the next sequential ID (DEC-004, etc.)*
+
+## DEC-004 — Work on a local branch; archive instead of delete
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-11-10 |
+| **Status** | ACCEPTED |
+| **Decision** | All refinement work is on local branch `refine/autonav-lab` (from `master`). Obsolete files are moved to `archive/` with `archive/README.md`, never deleted. Nothing under `datasets/` is modified or deleted, only added to. |
+| **Alternatives** | Delete obsolete files (smaller tree, loses context); work on `master` (rejected: brief forbids it). |
+| **Reason** | Keeps history and lets the owner review every removal. `git mv` preserves `git log --follow`. |
+
+## DEC-005 — Pose composition was backwards; fixed
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-11-10 |
+| **Status** | ACCEPTED (verified by tests/unit/test_pose_math.py) |
+| **Decision** | ICP registers scan k (source) onto scan k-1 (target), so its transform is T = T_{k-1}^{k}. The world pose accumulates as `W_k = W_{k-1} @ T`. The old code used `W_{k-1} @ inv(T)`. |
+| **Evidence** | Static scene, sensor advances +1 m in x: old code reported x = -1.0. New tests compare against hand-derived expected poses and replay the old bug to show it lands >3 m away over a 10-frame chain. |
+| **Consequence** | Any trajectory produced before this commit was mirrored. None had been published (the real-data runner crashed before exporting). |
+
+## DEC-006 — Registration validity gate
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-11-10 |
+| **Status** | ACCEPTED (thresholds revisit-able, see below) |
+| **Decision** | ICP `success` only means the solver ran. A registration is accepted only if inlier ratio >= 0.30, mean inlier residual <= 0.25 m, step translation <= 1.0 m and step rotation <= 20 deg. Rejections are counted by reason. A rejected frame leaves the pose AND the reference scan unchanged. |
+| **Alternatives** | Update the reference anyway (pose loses motion silently); constant-velocity fallback (hides failures). |
+| **Reason** | Thresholds come from sensor physics (walking ~0.1 m per 10 Hz scan, ground truth max 0.35 m per step), fixed BEFORE comparing against ground-truth error, and are stored in `run.json`. Tuning them on ATE would leak ground truth into the method. |
+| **Evidence** | Previously two unrelated scans, 24.8 s apart, were reported CONVERGED with a 0.40 inlier ratio and 0.54 m residual. |
+
+## DEC-007 — PCD header is authoritative; timestamps never invented
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-11-10 |
+| **Status** | ACCEPTED |
+| **Decision** | The PCD loader reads exactly `POINTS` records (error if the payload is shorter, trailing bytes ignored and reported). Filename timestamps `cloud_<sec>_<nsec>.pcd` are parsed (nsec is an integer nanosecond count). The KITTI adapter returns `timestamp=None` unless a `times.txt` exists. |
+| **Evidence** | Real Newer College files returned 65,668 points for a header declaring 65,536. Real filenames were not recognised, so no timestamps were found. |
+
+## DEC-008 — The 1,734 + 50 interleaved Newer College frames are not odometry data
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-11-10 |
+| **Status** | ACCEPTED |
+| **Decision** | Frames in `contiguous/point_clouds/ouster_scan` and `point_clouds/` are an 11.3% thinned sample (longest consecutive run: 4 frames, median gap 0.6 s). They are used only for single-frame preprocessing timing and point-count statistics, labelled NON-CONSECUTIVE. Odometry uses a window extracted from the full rosbag. |
+
+## DEC-009 — Ground-truth frame and RPE definition
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-11-10 |
+| **Status** | ACCEPTED, assumption UNVERIFIED |
+| **Decision** | ATE: position error after rigid SE(3) Umeyama alignment (no scale) with timestamp association (max 20 ms, one-to-one). RPE: Sturm et al. relative pose error over fixed time windows (1 s, 10 s) and fixed ground-truth path-length windows (10 m, 50 m). The old "RPE" compared step lengths and was removed. |
+| **Assumption** | The ground-truth poses describe the same body frame as the estimate (the LiDAR frame). This is recorded in every summary as UNVERIFIED until checked against the dataset documentation or the bag's TF tree. |
+
+## DEC-010 — Archived adapters
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-11-10 |
+| **Status** | ACCEPTED |
+| **Decision** | Hilti, OpenLORIS and TUM RGB-D adapters moved to `archive/adapters/` (inspect-only or no LiDAR). `configs/experiments/exp01..10` moved too (never loaded). A test-only `SyntheticAdapter` was added; it is flagged `synthetic` and never published. |
+
+## DEC-011 — No Docker; thread env + CPU affinity fallback
+
+| Field | Value |
+|-------|-------|
+| **Date** | 2026-11-10 |
+| **Status** | ACCEPTED |
+| **Decision** | Docker is not installed, so the 4-core and 1-core laptop profiles use thread environment variables plus CPU affinity (psutil), and record peak RSS instead of a memory cap. This limits CPU count only; it does not emulate a Pi's memory bandwidth, cache or clock. |
